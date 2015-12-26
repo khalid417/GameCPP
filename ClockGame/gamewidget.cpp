@@ -8,13 +8,14 @@
 #define MAXCIRCLES 12
 #define TIMERESET 12
 #define ANIMATIONENDFRAME 60.0
-#define ANIMATIONDELAY 1000/ANIMATIONENDFRAME
 #define DEV 1
 #ifdef DEV
-const QString RESOURCEPATH = "../../GameCPP/ClockGame/Resources/";
+static const QString RESOURCEPATH = "../../GameCPP/ClockGame/Resources/";
 #else
-const QString RESOURCEPATH = "./";
+static const QString RESOURCEPATH = "./";
 #endif
+static double ANIMATIONDELAY = 1000/ANIMATIONENDFRAME;
+
 GameWidget::GameWidget(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::GameWidget)
@@ -24,6 +25,7 @@ GameWidget::GameWidget(QWidget *parent) :
     auxLayout = new QVBoxLayout;
     QPushButton *start = new QPushButton("Generate");
     QPushButton *options = new QPushButton("Options");
+    menustate = false;
     connect(options, &QPushButton::clicked, [this](){
         if(!paused)
         {
@@ -36,11 +38,36 @@ GameWidget::GameWidget(QWidget *parent) :
             QPushButton *sound = new QPushButton("Sound");
             QPushButton *credits = new QPushButton("Credits");
             connect(help, &QPushButton::clicked, [](){});
-            connect(animationSpeed, &QPushButton::clicked, [](){});
+            connect(animationSpeed, &QPushButton::clicked, [this](){
+                while (QLayoutItem *menuItem = auxLayout->takeAt(1))
+                {
+                    delete menuItem->widget();
+                    delete menuItem;
+                }
+                if(!menustate)
+                {
+                    QInputDialog *animinput = new QInputDialog;
+                    animinput->setInputMode(QInputDialog::IntInput);
+                    animinput->setIntMinimum(1);
+                    animinput->setIntMaximum(10);
+                    animinput->setIntValue(6000.0/(ANIMATIONENDFRAME*ANIMATIONDELAY));
+                    animinput->setOptions(QInputDialog::NoButtons);
+                    connect(animinput, &QInputDialog::intValueChanged, [this, animinput](){
+                       ANIMATIONDELAY = (6000.0 / (animinput->intValue() * ANIMATIONENDFRAME));
+                    });
+                    auxLayout->addWidget(animinput, 0, Qt::AlignmentFlag::AlignTop);
+                    menustate = true;
+                }
+                else menustate = false;
+            });
             connect(difficulty, &QPushButton::clicked, [](){});
             connect(sound, &QPushButton::clicked, [this](){
-                static bool statesound = false;
-                if(!statesound)
+                while (QLayoutItem *menuItem = auxLayout->takeAt(1))
+                {
+                    delete menuItem->widget();
+                    delete menuItem;
+                }
+                if(!menustate)
                 {
                     QPushButton *volumeup = new QPushButton();
                     QPushButton *volumedown = new QPushButton();
@@ -68,28 +95,20 @@ GameWidget::GameWidget(QWidget *parent) :
                         if(!statemute)
                         {
                             player->stop();
-                            statemute = true;
+                            menustate = true;
                         }
                         else
                         {
                             player->play();
-                            statemute = false;
+                            menustate = false;
                         }
                     });
                     auxLayout->addWidget(volumeup, 0, Qt::AlignmentFlag::AlignTop);
                     auxLayout->addWidget(volumedown, 0, Qt::AlignmentFlag::AlignTop);
                     auxLayout->addWidget(mute, 0, Qt::AlignmentFlag::AlignTop);
-                    statesound = true;
+                    menustate = true;
                 }
-                else
-                {
-                    while (QLayoutItem *menuItem = auxLayout->takeAt(1))
-                    {
-                        delete menuItem->widget();
-                        delete menuItem;
-                    }
-                    statesound = false;
-                }
+                else menustate = false;
             });
             connect(credits, &QPushButton::clicked, [](){});
             pauseLayout->addWidget(help, 0, Qt::AlignmentFlag::AlignTop);
@@ -110,6 +129,12 @@ GameWidget::GameWidget(QWidget *parent) :
                 delete menuItem->widget();
                 delete menuItem;
             }
+            while (QLayoutItem *menuItem = auxLayout->takeAt(1))
+            {
+                delete menuItem->widget();
+                delete menuItem;
+            }
+            menustate = false;
         }
 
     });

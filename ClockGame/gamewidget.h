@@ -44,6 +44,7 @@ private:
     QVBoxLayout *pauseLayout;
     QVBoxLayout *auxLayout;
     QMediaPlayer *player;
+    bool menustate;
 protected:
     void paintEvent(QPaintEvent *event) Q_DECL_OVERRIDE;
     void mousePressEvent(QMouseEvent *event);
