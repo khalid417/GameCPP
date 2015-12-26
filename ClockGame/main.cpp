@@ -1,5 +1,7 @@
 #include "gamewidget.h"
 #include <QApplication>
+#include <QLayout>
+#include <QPushButton>
 
 int main(int argc, char *argv[])
 {
