@@ -19,4 +19,4 @@ SOURCES += main.cpp\
 HEADERS  += gamewidget.h \
     random.h
 
-FORMS    += gamewidget.ui
+FORMS    +=

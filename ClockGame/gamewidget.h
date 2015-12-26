@@ -3,9 +3,9 @@
 
 #include <QWidget>
 
-namespace Ui {
-class GameWidget;
-}
+//namespace Ui {
+//class GameWidget;
+//}
 
 class GameWidget : public QWidget
 {
@@ -17,7 +17,6 @@ public:
     ~GameWidget();
 
 private:
-    Ui::GameWidget *ui;
     int numCircles;
     int * circleArray;
     bool inCircle(QPoint center, int radius, QPoint cursorPos);
