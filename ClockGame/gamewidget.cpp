@@ -15,6 +15,31 @@ GameWidget::GameWidget(QWidget *parent) :
     ui(new Ui::GameWidget)
 {
     //ui->setupUi(this);
+    QPushButton *start = new QPushButton("Generate");
+    QPushButton *options = new QPushButton("Options");
+    QHBoxLayout *layout = new QHBoxLayout;
+    connect(options, &QPushButton::clicked, [this](){
+        if(!paused)
+        {
+            paused = true;
+            gameTimer->stop();
+            animationTimer->stop();
+        }
+        else
+        {
+            if(animationActive)
+                animationTimer->start();
+            if(gameStarted == true)
+                gameTimer->start();
+            paused = false;
+        }
+
+    });
+    connect(start, &QPushButton::clicked, [this](){
+    });
+    layout->addWidget(start, 0, Qt::AlignmentFlag::AlignTop);
+    layout->addWidget(options, 0, Qt::AlignmentFlag::AlignTop);
+    setLayout(layout);
     lose = false;
     win = false;
     numCircles = MAXCIRCLES;
@@ -30,13 +55,17 @@ GameWidget::GameWidget(QWidget *parent) :
     resize(800, 800);
     side = qMin(width(), height());
     startState = true;
-    timeRemaining  = 0;
+    timeRemaining = 0;
     animationActive = false;
+    paused = false;
+    gameStarted = false;
     update();
 }
 
 GameWidget::~GameWidget()
 {
+    delete gameTimer;
+    delete animationTimer;
     delete circleArray;
     delete ui;
 }
@@ -134,6 +163,7 @@ void GameWidget::paintEvent(QPaintEvent *)
         QPoint(0, -70)
     };
     QPainter painter(this);
+    painter.setOpacity(paused ? .5 : 1.0);
     if (startState)
     {
         for(int i = 0; i < numCircles; ++i)
@@ -157,14 +187,14 @@ void GameWidget::paintEvent(QPaintEvent *)
     {
         painter.setPen(textColor);
         painter.setFont(QFont("Times New Roman", 60));
-        painter.drawText(-width() / 4,0, "YOU LOSE!");
+        painter.drawText(-width() / 4, 0, "YOU LOSE!");
         return;
     }
     if (win)
     {
         painter.setPen(textColor);
         painter.setFont(QFont("Times New Roman", 60));
-        painter.drawText(-width() / 4,0, "YOU WIN!");
+        painter.drawText(-width() / 4, 0, "YOU WIN!");
         return;
     }
     if(!animationActive || (animationState != 2 && animationState != 3))
@@ -363,6 +393,7 @@ void GameWidget::paintEvent(QPaintEvent *)
             animationTimer->stop();
             timeRemaining = TIMERESET;
             gameTimer->start(1000);
+            gameStarted = true;
         }
     }
     else
@@ -406,7 +437,7 @@ void GameWidget::paintEvent(QPaintEvent *)
 
 void GameWidget::mousePressEvent(QMouseEvent *event)
 {
-    if (event->button() == Qt::LeftButton) qDebug() << "x:" << event->x() << "y:" << event->y();
+    if(animationActive || paused) return;
     QPoint cursorPos(event->x() - width() / 2, event->y() - height() / 2);
     QList<QPoint> circleGraph;
     for (int i = 0; i < numCircles; ++i)

@@ -35,6 +35,8 @@ private:
     int lastBlue[2];
     bool lose;
     int win;
+    bool paused;
+    bool gameStarted;
 protected:
     void paintEvent(QPaintEvent *event) Q_DECL_OVERRIDE;
     void mousePressEvent(QMouseEvent *event);
