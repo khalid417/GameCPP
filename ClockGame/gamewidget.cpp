@@ -11,8 +11,10 @@
 #define ANIMATIONENDFRAME 60.0
 #define ANIMATIONDELAY 1000/ANIMATIONENDFRAME
 GameWidget::GameWidget(QWidget *parent) :
-    QWidget(parent)
+    QWidget(parent),
+    ui(new Ui::GameWidget)
 {
+    //ui->setupUi(this);
     lose = false;
     win = false;
     numCircles = MAXCIRCLES;
@@ -36,8 +38,7 @@ GameWidget::GameWidget(QWidget *parent) :
 GameWidget::~GameWidget()
 {
     delete circleArray;
-    delete animationTimer;
-    delete gameTimer;
+    delete ui;
 }
 int * GameWidget::generatePuzzle2()
 {
@@ -418,7 +419,7 @@ void GameWidget::mousePressEvent(QMouseEvent *event)
     {
         if (inCircle(circleGraph.at(i), side/16, cursorPos))
         {
-            if (blueList.contains(i) && !animationActive)
+            if (blueList.contains(i))
             {
                 if(numCircles == 1)
                 {
