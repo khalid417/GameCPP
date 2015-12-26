@@ -3,6 +3,7 @@
 
 #include <QWidget>
 #include <QtWidgets>
+#include <QtMultimedia/QMediaPlayer>
 
 namespace Ui {
 class GameWidget;
@@ -41,6 +42,7 @@ private:
     bool gameOver;
     QHBoxLayout *topLayout;
     QVBoxLayout *pauseLayout;
+    QMediaPlayer *player;
 protected:
     void paintEvent(QPaintEvent *event) Q_DECL_OVERRIDE;
     void mousePressEvent(QMouseEvent *event);

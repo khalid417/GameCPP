@@ -9,6 +9,7 @@
 #define TIMERESET 12
 #define ANIMATIONENDFRAME 60.0
 #define ANIMATIONDELAY 1000/ANIMATIONENDFRAME
+const QString RESOURCEPATH = "../../GameCPP/ClockGame/Resources/";
 GameWidget::GameWidget(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::GameWidget)
@@ -98,6 +99,10 @@ GameWidget::GameWidget(QWidget *parent) :
     paused = false;
     gameStarted = false;
     gameOver = false;
+    player = new QMediaPlayer;
+    player->setMedia(QUrl::fromLocalFile(RESOURCEPATH + "theme.mp3"));
+    player->setVolume(50);
+    player->play();
     update();
 }
 
