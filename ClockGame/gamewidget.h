@@ -42,6 +42,7 @@ private:
     bool gameOver;
     QHBoxLayout *topLayout;
     QVBoxLayout *pauseLayout;
+    QVBoxLayout *auxLayout;
     QMediaPlayer *player;
 protected:
     void paintEvent(QPaintEvent *event) Q_DECL_OVERRIDE;

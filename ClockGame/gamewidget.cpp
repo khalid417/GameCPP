@@ -9,13 +9,19 @@
 #define TIMERESET 12
 #define ANIMATIONENDFRAME 60.0
 #define ANIMATIONDELAY 1000/ANIMATIONENDFRAME
+#define DEV 1
+#ifdef DEV
 const QString RESOURCEPATH = "../../GameCPP/ClockGame/Resources/";
+#else
+const QString RESOURCEPATH = "./";
+#endif
 GameWidget::GameWidget(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::GameWidget)
 {
     pauseLayout = new QVBoxLayout;
     topLayout = new QHBoxLayout;
+    auxLayout = new QVBoxLayout;
     QPushButton *start = new QPushButton("Generate");
     QPushButton *options = new QPushButton("Options");
     connect(options, &QPushButton::clicked, [this](){
@@ -32,7 +38,59 @@ GameWidget::GameWidget(QWidget *parent) :
             connect(help, &QPushButton::clicked, [](){});
             connect(animationSpeed, &QPushButton::clicked, [](){});
             connect(difficulty, &QPushButton::clicked, [](){});
-            connect(sound, &QPushButton::clicked, [](){});
+            connect(sound, &QPushButton::clicked, [this](){
+                static bool statesound = false;
+                if(!statesound)
+                {
+                    QPushButton *volumeup = new QPushButton();
+                    QPushButton *volumedown = new QPushButton();
+                    QPushButton *mute = new QPushButton();
+                    QPixmap pixmapup(RESOURCEPATH + "Icons/ic_volume_up_black_24dp_1x.png");
+                    QIcon ButtonIconup(pixmapup);
+                    volumeup->setIcon(ButtonIconup);
+                    volumeup->setIconSize(pixmapup.rect().size());
+                    QPixmap pixmapdown(RESOURCEPATH + "Icons/ic_volume_down_black_24dp_1x.png");
+                    QIcon ButtonIcondown(pixmapdown);
+                    volumedown->setIcon(ButtonIcondown);
+                    volumedown->setIconSize(pixmapdown.rect().size());
+                    QPixmap pixmapoff(RESOURCEPATH + "Icons/ic_volume_off_black_24dp_1x.png");
+                    QIcon ButtonIconoff(pixmapoff);
+                    mute->setIcon(ButtonIconoff);
+                    mute->setIconSize(pixmapoff.rect().size());
+                    connect(volumeup, &QPushButton::clicked, [this](){
+                        player->setVolume(player->volume() + 2);
+                    });
+                    connect(volumedown, &QPushButton::clicked, [this](){
+                        player->setVolume(player->volume() - 2);
+                    });
+                    connect(mute, &QPushButton::clicked, [this](){
+                        static bool statemute = false;
+                        if(!statemute)
+                        {
+                            player->stop();
+                            statemute = true;
+                        }
+                        else
+                        {
+                            player->play();
+                            statemute = false;
+                        }
+                    });
+                    auxLayout->addWidget(volumeup, 0, Qt::AlignmentFlag::AlignTop);
+                    auxLayout->addWidget(volumedown, 0, Qt::AlignmentFlag::AlignTop);
+                    auxLayout->addWidget(mute, 0, Qt::AlignmentFlag::AlignTop);
+                    statesound = true;
+                }
+                else
+                {
+                    while (QLayoutItem *menuItem = auxLayout->takeAt(1))
+                    {
+                        delete menuItem->widget();
+                        delete menuItem;
+                    }
+                    statesound = false;
+                }
+            });
             connect(credits, &QPushButton::clicked, [](){});
             pauseLayout->addWidget(help, 0, Qt::AlignmentFlag::AlignTop);
             pauseLayout->addWidget(animationSpeed, 0, Qt::AlignmentFlag::AlignTop);
@@ -47,10 +105,10 @@ GameWidget::GameWidget(QWidget *parent) :
             if(gameStarted == true)
                 gameTimer->start();
             paused = false;
-            while (QLayoutItem *button = pauseLayout->takeAt(1))
+            while (QLayoutItem *menuItem = pauseLayout->takeAt(1))
             {
-                delete button->widget();
-                delete button;
+                delete menuItem->widget();
+                delete menuItem;
             }
         }
 
@@ -75,8 +133,9 @@ GameWidget::GameWidget(QWidget *parent) :
             update();
         }
     });
-    topLayout->addWidget(start, 0, Qt::AlignmentFlag::AlignTop);
+    auxLayout->addWidget(start, 0, Qt::AlignmentFlag::AlignTop);
     pauseLayout->addWidget(options, 0, Qt::AlignmentFlag::AlignTop);
+    topLayout->addLayout(auxLayout);
     topLayout->addLayout(pauseLayout);
     setLayout(topLayout);
     lose = false;
@@ -100,7 +159,7 @@ GameWidget::GameWidget(QWidget *parent) :
     gameStarted = false;
     gameOver = false;
     player = new QMediaPlayer;
-    player->setMedia(QUrl::fromLocalFile(RESOURCEPATH + "theme.mp3"));
+    player->setMedia(QUrl::fromLocalFile(RESOURCEPATH + "Sounds/theme.mp3"));
     player->setVolume(50);
     player->play();
     update();
