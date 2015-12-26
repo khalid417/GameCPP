@@ -1,6 +1,5 @@
 #include "gamewidget.h"
 #include "ui_gamewidget.h"
-#include <QtWidgets>
 #include "random.h"
 #include <QTime>
 #include <QList>
@@ -14,16 +13,31 @@ GameWidget::GameWidget(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::GameWidget)
 {
-    //ui->setupUi(this);
+    pauseLayout = new QVBoxLayout;
+    topLayout = new QHBoxLayout;
     QPushButton *start = new QPushButton("Generate");
     QPushButton *options = new QPushButton("Options");
-    QHBoxLayout *layout = new QHBoxLayout;
     connect(options, &QPushButton::clicked, [this](){
         if(!paused)
         {
             paused = true;
             gameTimer->stop();
             animationTimer->stop();
+            QPushButton *help = new QPushButton("Help");
+            QPushButton *animationSpeed = new QPushButton("Animation Speed");
+            QPushButton *difficulty = new QPushButton("Difficulty");
+            QPushButton *sound = new QPushButton("Sound");
+            QPushButton *credits = new QPushButton("Credits");
+            connect(help, &QPushButton::clicked, [](){});
+            connect(animationSpeed, &QPushButton::clicked, [](){});
+            connect(difficulty, &QPushButton::clicked, [](){});
+            connect(sound, &QPushButton::clicked, [](){});
+            connect(credits, &QPushButton::clicked, [](){});
+            pauseLayout->addWidget(help, 0, Qt::AlignmentFlag::AlignTop);
+            pauseLayout->addWidget(animationSpeed, 0, Qt::AlignmentFlag::AlignTop);
+            pauseLayout->addWidget(difficulty, 0, Qt::AlignmentFlag::AlignTop);
+            pauseLayout->addWidget(sound, 0, Qt::AlignmentFlag::AlignTop);
+            pauseLayout->addWidget(credits, 0, Qt::AlignmentFlag::AlignTop);
         }
         else
         {
@@ -32,14 +46,38 @@ GameWidget::GameWidget(QWidget *parent) :
             if(gameStarted == true)
                 gameTimer->start();
             paused = false;
+            while (QLayoutItem *button = pauseLayout->takeAt(1))
+            {
+                delete button->widget();
+                delete button;
+            }
         }
 
     });
     connect(start, &QPushButton::clicked, [this](){
+        if(gameOver)
+        {
+            lose = false;
+            win = false;
+            numCircles = MAXCIRCLES;
+            delete circleArray;
+            circleArray = generatePuzzle2();
+            startState = true;
+            timeRemaining = 0;
+            animationActive = false;
+            paused = false;
+            gameStarted = false;
+            gameOver = false;
+            gameTimer->stop();
+            blueList.clear();
+            redList.clear();
+            update();
+        }
     });
-    layout->addWidget(start, 0, Qt::AlignmentFlag::AlignTop);
-    layout->addWidget(options, 0, Qt::AlignmentFlag::AlignTop);
-    setLayout(layout);
+    topLayout->addWidget(start, 0, Qt::AlignmentFlag::AlignTop);
+    pauseLayout->addWidget(options, 0, Qt::AlignmentFlag::AlignTop);
+    topLayout->addLayout(pauseLayout);
+    setLayout(topLayout);
     lose = false;
     win = false;
     numCircles = MAXCIRCLES;
@@ -59,6 +97,7 @@ GameWidget::GameWidget(QWidget *parent) :
     animationActive = false;
     paused = false;
     gameStarted = false;
+    gameOver = false;
     update();
 }
 
@@ -188,6 +227,7 @@ void GameWidget::paintEvent(QPaintEvent *)
         painter.setPen(textColor);
         painter.setFont(QFont("Times New Roman", 60));
         painter.drawText(-width() / 4, 0, "YOU LOSE!");
+        gameOver = true;
         return;
     }
     if (win)
@@ -195,6 +235,7 @@ void GameWidget::paintEvent(QPaintEvent *)
         painter.setPen(textColor);
         painter.setFont(QFont("Times New Roman", 60));
         painter.drawText(-width() / 4, 0, "YOU WIN!");
+        gameOver = true;
         return;
     }
     if(!animationActive || (animationState != 2 && animationState != 3))

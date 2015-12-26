@@ -2,6 +2,7 @@
 #define GAMEWIDGET_H
 
 #include <QWidget>
+#include <QtWidgets>
 
 namespace Ui {
 class GameWidget;
@@ -37,6 +38,9 @@ private:
     int win;
     bool paused;
     bool gameStarted;
+    bool gameOver;
+    QHBoxLayout *topLayout;
+    QVBoxLayout *pauseLayout;
 protected:
     void paintEvent(QPaintEvent *event) Q_DECL_OVERRIDE;
     void mousePressEvent(QMouseEvent *event);
