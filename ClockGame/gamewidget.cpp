@@ -1,5 +1,4 @@
 #include "gamewidget.h"
-#include "ui_gamewidget.h"
 #include "random.h"
 #include <QTime>
 #include <QList>
@@ -16,177 +15,37 @@ static const QString RESOURCEPATH = "./";
 #endif
 static double ANIMATIONDELAY = 1000/ANIMATIONENDFRAME;
 
-GameWidget::GameWidget(QWidget *parent) :
-    QWidget(parent),
-    ui(new Ui::GameWidget)
+GameWidget::GameWidget(QQuickItem *parent, int difficulty, int animationSpeed) :
+    QQuickPaintedItem(parent)
 {
-    pauseLayout = new QVBoxLayout;
-    topLayout = new QHBoxLayout;
-    auxLayout = new QVBoxLayout;
-    QPushButton *start = new QPushButton("Generate");
-    QPushButton *options = new QPushButton("Options");
-    menustate = false;
-    connect(options, &QPushButton::clicked, [this](){
-        if(!paused)
-        {
-            paused = true;
-            gameTimer->stop();
-            animationTimer->stop();
-            QPushButton *help = new QPushButton("Help");
-            QPushButton *animationSpeed = new QPushButton("Animation Speed");
-            QPushButton *difficulty = new QPushButton("Difficulty");
-            QPushButton *sound = new QPushButton("Sound");
-            QPushButton *credits = new QPushButton("Credits");
-            connect(help, &QPushButton::clicked, [](){});
-            connect(animationSpeed, &QPushButton::clicked, [this](){
-                while (QLayoutItem *menuItem = auxLayout->takeAt(1))
-                {
-                    delete menuItem->widget();
-                    delete menuItem;
-                }
-                if(!menustate)
-                {
-                    QInputDialog *animinput = new QInputDialog;
-                    animinput->setInputMode(QInputDialog::IntInput);
-                    animinput->setIntMinimum(1);
-                    animinput->setIntMaximum(10);
-                    animinput->setIntValue(6000.0/(ANIMATIONENDFRAME*ANIMATIONDELAY));
-                    animinput->setOptions(QInputDialog::NoButtons);
-                    connect(animinput, &QInputDialog::intValueChanged, [this, animinput](){
-                       ANIMATIONDELAY = (6000.0 / (animinput->intValue() * ANIMATIONENDFRAME));
-                    });
-                    auxLayout->addWidget(animinput, 0, Qt::AlignmentFlag::AlignTop);
-                    menustate = true;
-                }
-                else menustate = false;
-            });
-            connect(difficulty, &QPushButton::clicked, [](){});
-            connect(sound, &QPushButton::clicked, [this](){
-                while (QLayoutItem *menuItem = auxLayout->takeAt(1))
-                {
-                    delete menuItem->widget();
-                    delete menuItem;
-                }
-                if(!menustate)
-                {
-                    QPushButton *volumeup = new QPushButton();
-                    QPushButton *volumedown = new QPushButton();
-                    QPushButton *mute = new QPushButton();
-                    QPixmap pixmapup(RESOURCEPATH + "Icons/ic_volume_up_black_24dp_1x.png");
-                    QIcon ButtonIconup(pixmapup);
-                    volumeup->setIcon(ButtonIconup);
-                    volumeup->setIconSize(pixmapup.rect().size());
-                    QPixmap pixmapdown(RESOURCEPATH + "Icons/ic_volume_down_black_24dp_1x.png");
-                    QIcon ButtonIcondown(pixmapdown);
-                    volumedown->setIcon(ButtonIcondown);
-                    volumedown->setIconSize(pixmapdown.rect().size());
-                    QPixmap pixmapoff(RESOURCEPATH + "Icons/ic_volume_off_black_24dp_1x.png");
-                    QIcon ButtonIconoff(pixmapoff);
-                    mute->setIcon(ButtonIconoff);
-                    mute->setIconSize(pixmapoff.rect().size());
-                    connect(volumeup, &QPushButton::clicked, [this](){
-                        player->setVolume(player->volume() + 2);
-                    });
-                    connect(volumedown, &QPushButton::clicked, [this](){
-                        player->setVolume(player->volume() - 2);
-                    });
-                    connect(mute, &QPushButton::clicked, [this](){
-                        static bool statemute = false;
-                        if(!statemute)
-                        {
-                            player->stop();
-                            menustate = true;
-                        }
-                        else
-                        {
-                            player->play();
-                            menustate = false;
-                        }
-                    });
-                    auxLayout->addWidget(volumeup, 0, Qt::AlignmentFlag::AlignTop);
-                    auxLayout->addWidget(volumedown, 0, Qt::AlignmentFlag::AlignTop);
-                    auxLayout->addWidget(mute, 0, Qt::AlignmentFlag::AlignTop);
-                    menustate = true;
-                }
-                else menustate = false;
-            });
-            connect(credits, &QPushButton::clicked, [](){});
-            pauseLayout->addWidget(help, 0, Qt::AlignmentFlag::AlignTop);
-            pauseLayout->addWidget(animationSpeed, 0, Qt::AlignmentFlag::AlignTop);
-            pauseLayout->addWidget(difficulty, 0, Qt::AlignmentFlag::AlignTop);
-            pauseLayout->addWidget(sound, 0, Qt::AlignmentFlag::AlignTop);
-            pauseLayout->addWidget(credits, 0, Qt::AlignmentFlag::AlignTop);
-        }
-        else
-        {
-            if(animationActive)
-                animationTimer->start();
-            if(gameStarted == true)
-                gameTimer->start();
-            paused = false;
-            while (QLayoutItem *menuItem = pauseLayout->takeAt(1))
-            {
-                delete menuItem->widget();
-                delete menuItem;
-            }
-            while (QLayoutItem *menuItem = auxLayout->takeAt(1))
-            {
-                delete menuItem->widget();
-                delete menuItem;
-            }
-            menustate = false;
-        }
-
-    });
-    connect(start, &QPushButton::clicked, [this](){
-        if(gameOver)
-        {
-            lose = false;
-            win = false;
-            numCircles = MAXCIRCLES;
-            delete circleArray;
-            circleArray = generatePuzzle2();
-            startState = true;
-            timeRemaining = 0;
-            animationActive = false;
-            paused = false;
-            gameStarted = false;
-            gameOver = false;
-            gameTimer->stop();
-            blueList.clear();
-            redList.clear();
-            update();
-        }
-    });
-    auxLayout->addWidget(start, 0, Qt::AlignmentFlag::AlignTop);
-    pauseLayout->addWidget(options, 0, Qt::AlignmentFlag::AlignTop);
-    topLayout->addLayout(auxLayout);
-    topLayout->addLayout(pauseLayout);
-    setLayout(topLayout);
+    setOpaquePainting(false);
+    setAcceptedMouseButtons(Qt::AllButtons);
+    setAcceptHoverEvents(true);
+    // integration with qquick causes paint to be called from a separate thread of execution
+    gameTimerActive = false;
     lose = false;
     win = false;
+    animationState = 0;
     numCircles = MAXCIRCLES;
-    QTimer *timer = new QTimer(this);
     gameTimer = new QTimer(this);
     animationTimer = new QTimer(this);
-    connect(timer, SIGNAL(timeout()), this, SLOT(update()));
-    connect(gameTimer, &QTimer::timeout, [this](){timeRemaining--;});
-    connect(animationTimer, &QTimer::timeout, [this](){animationFrame++;update();});
-    timer->start(1000);
+    connect(gameTimer, &QTimer::timeout, [this](){if(gameTimerActive) timeRemaining--;});
+    connect(animationTimer, &QTimer::timeout, [this](){
+        if(animationActive) {
+            animationFrame++;
+        }
+        update();
+    });
+    gameTimer->start(1000);
+    animationTimer->start(ANIMATIONDELAY);
     circleArray = generatePuzzle2();
-    setWindowTitle(tr("Game"));
-    resize(800, 800);
-    side = qMin(width(), height());
+    circleCache = new int [MAXCIRCLES];
+    for(int i = 0; i < MAXCIRCLES; ++i)
+        circleCache[i] = circleArray[i];
+    side = 800;
     startState = true;
     timeRemaining = 0;
     animationActive = false;
-    paused = false;
-    gameStarted = false;
-    gameOver = false;
-    player = new QMediaPlayer;
-    player->setMedia(QUrl::fromLocalFile(RESOURCEPATH + "Sounds/theme.mp3"));
-    player->setVolume(50);
-    player->play();
     update();
 }
 
@@ -195,7 +54,7 @@ GameWidget::~GameWidget()
     delete gameTimer;
     delete animationTimer;
     delete circleArray;
-    delete ui;
+    delete circleCache;
 }
 int * GameWidget::generatePuzzle2()
 {
@@ -275,9 +134,8 @@ int * GameWidget::generatePuzzle()
             return puzzleArray;
 }
 
-void GameWidget::paintEvent(QPaintEvent *)
+void GameWidget::paint(QPainter *painter)
 {
-    static int animationState = 0;
     static const QPoint minuteHand[3] =
     {
         QPoint(7, 8),
@@ -290,8 +148,6 @@ void GameWidget::paintEvent(QPaintEvent *)
         QPoint(-3, 8),
         QPoint(0, -70)
     };
-    QPainter painter(this);
-    painter.setOpacity(paused ? .5 : 1.0);
     if (startState)
     {
         for(int i = 0; i < numCircles; ++i)
@@ -309,22 +165,20 @@ void GameWidget::paintEvent(QPaintEvent *)
         QPoint circle = QPoint(cos(degree) * side / 4, sin(degree) * side / 4);
         circleGraph.append(circle);
     }
-    painter.setRenderHint(QPainter::Antialiasing);
-    painter.translate(width() / 2, height() / 2);
-    if (lose || (timeRemaining <= 0 && gameTimer->isActive()))
+    painter->setRenderHint(QPainter::Antialiasing);
+    painter->translate(width() / 2, height() / 2);
+    if (lose || (timeRemaining <= 0 && gameTimerActive))
     {
-        painter.setPen(textColor);
-        painter.setFont(QFont("Times New Roman", 60));
-        painter.drawText(-width() / 4, 0, "YOU LOSE!");
-        gameOver = true;
+        painter->setPen(textColor);
+        painter->setFont(QFont("Times New Roman", 60));
+        painter->drawText(-width() / 4, 0, "YOU LOSE!");
         return;
     }
     if (win)
     {
-        painter.setPen(textColor);
-        painter.setFont(QFont("Times New Roman", 60));
-        painter.drawText(-width() / 4, 0, "YOU WIN!");
-        gameOver = true;
+        painter->setPen(textColor);
+        painter->setFont(QFont("Times New Roman", 60));
+        painter->drawText(-width() / 4, 0, "YOU WIN!");
         return;
     }
     if(!animationActive || (animationState != 2 && animationState != 3))
@@ -332,18 +186,18 @@ void GameWidget::paintEvent(QPaintEvent *)
         int circleNum = 0;
         for (QPoint circle : circleGraph)
         {
-            if(redList.contains(circleNum)) painter.setBrush(circleColorRed);
-            else painter.setBrush(circleColorBlue);
-            if (animationActive == 1 && circleNum == last) painter.setBrush(circleColorGreen);
-            painter.drawEllipse(circle, radius, radius);
+            if(redList.contains(circleNum)) painter->setBrush(circleColorRed);
+            else painter->setBrush(circleColorBlue);
+            if (animationActive == 1 && circleNum == last) painter->setBrush(circleColorGreen);
+            painter->drawEllipse(circle, radius, radius);
             circleNum++;
         }
 
-        painter.setPen(textColor);
-        painter.setFont(QFont("Times New Roman", 30));
+        painter->setPen(textColor);
+        painter->setFont(QFont("Times New Roman", 30));
         for (int i = 0 ; i < numCircles ; i++)
         {
-            painter.drawText(circleGraph.at(i), QString::number(circleArray[i]));
+            painter->drawText(circleGraph.at(i), QString::number(circleArray[i]));
         }
     }
     if(animationActive)
@@ -351,26 +205,26 @@ void GameWidget::paintEvent(QPaintEvent *)
         if (animationState == 0) //move hands to last
         {
             QColor ColorAnimate(Qt::GlobalColor::green);
-            painter.scale(side / 200.0, side / 200.0);
+            painter->scale(side / 200.0, side / 200.0);
 
-            painter.setPen(Qt::NoPen);
-            painter.setBrush(ColorAnimate);
+            painter->setPen(Qt::NoPen);
+            painter->setBrush(ColorAnimate);
 
-            painter.save();
-            painter.rotate((360.0/numCircles) * (lastBlue[0] + (last - lastBlue[0])*animationFrame/ANIMATIONENDFRAME) + 90);
-            painter.drawConvexPolygon(minuteHand, 3);
-            painter.restore();
+            painter->save();
+            painter->rotate((360.0/numCircles) * (lastBlue[0] + (last - lastBlue[0])*animationFrame/ANIMATIONENDFRAME) + 90);
+            painter->drawConvexPolygon(minuteHand, 3);
+            painter->restore();
             if(blueList.size() > 1)
             {
-                painter.rotate((360.0/numCircles) * (lastBlue[1] + (last - lastBlue[1])*animationFrame/ANIMATIONENDFRAME) + 90);
-                painter.drawConvexPolygon(minuteHand, 3);
+                painter->rotate((360.0/numCircles) * (lastBlue[1] + (last - lastBlue[1])*animationFrame/ANIMATIONENDFRAME) + 90);
+                painter->drawConvexPolygon(minuteHand, 3);
             }
             else
             {
-                painter.rotate((360.0/numCircles) * (lastBlue[1] + (last - lastBlue[1])*animationFrame/ANIMATIONENDFRAME) + 90);
-                painter.drawConvexPolygon(minuteHand, 3);
+                painter->rotate((360.0/numCircles) * (lastBlue[1] + (last - lastBlue[1])*animationFrame/ANIMATIONENDFRAME) + 90);
+                painter->drawConvexPolygon(minuteHand, 3);
             }
-            if(animationFrame == ANIMATIONENDFRAME)
+            if(animationFrame >= ANIMATIONENDFRAME)
             {
                 animationFrame = 0;
                 animationState = 1;
@@ -379,18 +233,18 @@ void GameWidget::paintEvent(QPaintEvent *)
         else if (animationState == 1) //move hands to next blue
         {
             QColor ColorAnimate(Qt::GlobalColor::green);
-            painter.scale(side / 200.0, side / 200.0);
+            painter->scale(side / 200.0, side / 200.0);
 
-            painter.setPen(Qt::NoPen);
-            painter.setBrush(ColorAnimate);
-            painter.save();
-            painter.rotate((360.0/numCircles) * (last + (blueList.at(0) - last)*animationFrame/ANIMATIONENDFRAME) + 90);
-            painter.drawConvexPolygon(minuteHand, 3);
-            painter.restore();
-            painter.rotate((360.0/numCircles) * (last + (blueList.at(1) - last)*animationFrame/ANIMATIONENDFRAME) + 90);
-            painter.drawConvexPolygon(minuteHand, 3);
+            painter->setPen(Qt::NoPen);
+            painter->setBrush(ColorAnimate);
+            painter->save();
+            painter->rotate((360.0/numCircles) * (last + (blueList.at(0) - last)*animationFrame/ANIMATIONENDFRAME) + 90);
+            painter->drawConvexPolygon(minuteHand, 3);
+            painter->restore();
+            painter->rotate((360.0/numCircles) * (last + (blueList.at(1) - last)*animationFrame/ANIMATIONENDFRAME) + 90);
+            painter->drawConvexPolygon(minuteHand, 3);
 
-            if(animationFrame == ANIMATIONENDFRAME)
+            if(animationFrame >= ANIMATIONENDFRAME)
             {
                 animationFrame = 0;
                 animationState = 2;
@@ -401,49 +255,49 @@ void GameWidget::paintEvent(QPaintEvent *)
             int circleNum = 0;
             for (QPoint circle : circleGraph)
             {
-                if(redList.contains(circleNum)) painter.setBrush(circleColorRed);
-                else painter.setBrush(circleColorBlue);
+                if(redList.contains(circleNum)) painter->setBrush(circleColorRed);
+                else painter->setBrush(circleColorBlue);
                 if (circleNum == last)
                 {
-                    painter.save();
-                    painter.setBrush(circleColorGreen);
-                    painter.setOpacity((ANIMATIONENDFRAME-animationFrame)/ANIMATIONENDFRAME);
-                    painter.drawEllipse(circle, radius, radius);
+                    painter->save();
+                    painter->setBrush(circleColorGreen);
+                    painter->setOpacity((ANIMATIONENDFRAME-animationFrame)/ANIMATIONENDFRAME);
+                    painter->drawEllipse(circle, radius, radius);
                     circleNum++;
-                    painter.restore();
+                    painter->restore();
                     continue;
                 }
-                painter.drawEllipse(circle, radius, radius);
+                painter->drawEllipse(circle, radius, radius);
                 circleNum++;
             }
 
-            painter.setPen(textColor);
-            painter.setFont(QFont("Times New Roman", 30));
+            painter->setPen(textColor);
+            painter->setFont(QFont("Times New Roman", 30));
             for (int i = 0 ; i < numCircles ; i++)
             {
                 if(i == last)
                 {
-                    painter.save();
-                    painter.setOpacity((ANIMATIONENDFRAME-animationFrame)/ANIMATIONENDFRAME);
-                    painter.drawText(circleGraph.at(i), QString::number(circleArray[i]));
-                    painter.restore();
+                    painter->save();
+                    painter->setOpacity((ANIMATIONENDFRAME-animationFrame)/ANIMATIONENDFRAME);
+                    painter->drawText(circleGraph.at(i), QString::number(circleArray[i]));
+                    painter->restore();
                     continue;
                 }
-                painter.drawText(circleGraph.at(i), QString::number(circleArray[i]));
+                painter->drawText(circleGraph.at(i), QString::number(circleArray[i]));
             }
             QColor ColorAnimate(Qt::GlobalColor::green);
-            painter.scale(side / 200.0, side / 200.0);
+            painter->scale(side / 200.0, side / 200.0);
 
-            painter.setPen(Qt::NoPen);
-            painter.setBrush(ColorAnimate);
+            painter->setPen(Qt::NoPen);
+            painter->setBrush(ColorAnimate);
 
-            painter.save();
-            painter.rotate((360.0/numCircles) * (blueList.at(0)) + 90);
-            painter.drawConvexPolygon(minuteHand, 3);
-            painter.restore();
-            painter.rotate((360.0/numCircles) * (blueList.at(1)) + 90);
-            painter.drawConvexPolygon(minuteHand, 3);
-            if(animationFrame == ANIMATIONENDFRAME)
+            painter->save();
+            painter->rotate((360.0/numCircles) * (blueList.at(0)) + 90);
+            painter->drawConvexPolygon(minuteHand, 3);
+            painter->restore();
+            painter->rotate((360.0/numCircles) * (blueList.at(1)) + 90);
+            painter->drawConvexPolygon(minuteHand, 3);
+            if(animationFrame >= ANIMATIONENDFRAME)
             {
                 animationFrame = 0;
                 animationState = 3;
@@ -454,8 +308,8 @@ void GameWidget::paintEvent(QPaintEvent *)
             int circleNum = 0;
             for (QPoint circle : circleGraph)
             {
-                if(redList.contains(circleNum)) painter.setBrush(circleColorRed);
-                else painter.setBrush(circleColorBlue);
+                if(redList.contains(circleNum)) painter->setBrush(circleColorRed);
+                else painter->setBrush(circleColorBlue);
                 double degree = (circleNum > last) ? (2 * PI / (numCircles - 1)) * (circleNum - 1) : (2 * PI / (numCircles - 1)) * (circleNum);
                 QPoint pos(circle.x() + ((cos(degree) * side / 4) - circle.x())*animationFrame/ANIMATIONENDFRAME,
                            circle.y() + ((sin(degree) * side / 4) - circle.y())*animationFrame/ANIMATIONENDFRAME);
@@ -464,12 +318,12 @@ void GameWidget::paintEvent(QPaintEvent *)
                     circleNum++;
                     continue;
                 }
-                painter.drawEllipse(pos, radius, radius);
+                painter->drawEllipse(pos, radius, radius);
                 circleNum++;
             }
 
-            painter.setPen(textColor);
-            painter.setFont(QFont("Times New Roman", 30));
+            painter->setPen(textColor);
+            painter->setFont(QFont("Times New Roman", 30));
             for (int i = 0 ; i < numCircles ; i++)
             {
                 double degree = (i > last) ? (2 * PI / (numCircles - 1)) * (i - 1) : (2 * PI / (numCircles - 1)) * (i);
@@ -477,30 +331,30 @@ void GameWidget::paintEvent(QPaintEvent *)
                            circleGraph.at(i).y() + ((sin(degree) * side / 4) - circleGraph.at(i).y())*animationFrame/ANIMATIONENDFRAME);
                 if(i == last)
                     continue;
-                painter.drawText(pos, QString::number(circleArray[i]));
+                painter->drawText(pos, QString::number(circleArray[i]));
             }
             QColor ColorAnimate(Qt::GlobalColor::green);
-            painter.scale(side / 200.0, side / 200.0);
+            painter->scale(side / 200.0, side / 200.0);
 
-            painter.setPen(Qt::NoPen);
-            painter.setBrush(ColorAnimate);
+            painter->setPen(Qt::NoPen);
+            painter->setBrush(ColorAnimate);
 
-            painter.save();
-            painter.rotate((360.0/numCircles) * (blueList.at(0)) + ((360.0/(numCircles - 1))*(blueList.at(0) + ((blueList.at(0) > last) ? -1 : 0))
+            painter->save();
+            painter->rotate((360.0/numCircles) * (blueList.at(0)) + ((360.0/(numCircles - 1))*(blueList.at(0) + ((blueList.at(0) > last) ? -1 : 0))
                                                                     - (360.0/numCircles) * (blueList.at(0)))*animationFrame/ANIMATIONENDFRAME + 90);
-            painter.drawConvexPolygon(minuteHand, 3);
-            painter.restore();
-            painter.rotate((360.0/numCircles) * (blueList.at(1)) + ((360.0/(numCircles - 1))*(blueList.at(1) + ((blueList.at(1) > last) ? -1 : 0))
+            painter->drawConvexPolygon(minuteHand, 3);
+            painter->restore();
+            painter->rotate((360.0/numCircles) * (blueList.at(1)) + ((360.0/(numCircles - 1))*(blueList.at(1) + ((blueList.at(1) > last) ? -1 : 0))
                                                                     - (360.0/numCircles) * (blueList.at(1)))*animationFrame/ANIMATIONENDFRAME + 90);
-            painter.drawConvexPolygon(minuteHand, 3);
+            painter->drawConvexPolygon(minuteHand, 3);
 
-            if(animationFrame == ANIMATIONENDFRAME)
+            if(animationFrame >= ANIMATIONENDFRAME)
             {
                 animationState = 4;
             }
         }
         //exit
-        if(animationFrame == ANIMATIONENDFRAME && animationState == 4)
+        if(animationState == 4)
         {
             animationState = 0;
             for(int i = 0; i < blueList.size(); ++i)
@@ -520,10 +374,8 @@ void GameWidget::paintEvent(QPaintEvent *)
             delete circleArray;
             circleArray = temp;
             animationActive = false;
-            animationTimer->stop();
             timeRemaining = TIMERESET;
-            gameTimer->start(1000);
-            gameStarted = true;
+            gameTimerActive = true;
         }
     }
     else
@@ -534,40 +386,40 @@ void GameWidget::paintEvent(QPaintEvent *)
             QColor secondColor(127, 0, 127);
             QColor minuteColor(0, 127, 127, 191);
 
-            painter.scale(side / 200.0, side / 200.0);
+            painter->scale(side / 200.0, side / 200.0);
 
-            painter.setPen(Qt::NoPen);
-            painter.setBrush(secondColor);
+            painter->setPen(Qt::NoPen);
+            painter->setBrush(secondColor);
 
-            painter.save();
-            painter.rotate((360.0/TIMERESET) * (TIMERESET - timeRemaining));
-            painter.drawConvexPolygon(secondHand, 3);
-            painter.restore();
+            painter->save();
+            painter->rotate((360.0/TIMERESET) * (TIMERESET - timeRemaining));
+            painter->drawConvexPolygon(secondHand, 3);
+            painter->restore();
 
-            painter.setPen(secondColor);
+            painter->setPen(secondColor);
 
             for (int i = 0; i < 12; ++i)
             {
-                painter.drawLine(88, 0, 96, 0);
-                painter.rotate(30.0);
+                painter->drawLine(88, 0, 96, 0);
+                painter->rotate(30.0);
             }
 
-            painter.setPen(Qt::NoPen);
-            painter.setBrush(minuteColor);
+            painter->setPen(Qt::NoPen);
+            painter->setBrush(minuteColor);
 
-            painter.save();
-            painter.rotate((360.0/numCircles) * blueList.at(0) + 90);
-            painter.drawConvexPolygon(minuteHand, 3);
-            painter.restore();
-            painter.rotate((360.0/numCircles) * blueList.at(1) + 90);
-            painter.drawConvexPolygon(minuteHand, 3);
+            painter->save();
+            painter->rotate((360.0/numCircles) * blueList.at(0) + 90);
+            painter->drawConvexPolygon(minuteHand, 3);
+            painter->restore();
+            painter->rotate((360.0/numCircles) * blueList.at(1) + 90);
+            painter->drawConvexPolygon(minuteHand, 3);
         }
     }
 }
 
 void GameWidget::mousePressEvent(QMouseEvent *event)
 {
-    if(animationActive || paused) return;
+    if(animationActive) return;
     QPoint cursorPos(event->x() - width() / 2, event->y() - height() / 2);
     QList<QPoint> circleGraph;
     for (int i = 0; i < numCircles; ++i)
@@ -585,7 +437,7 @@ void GameWidget::mousePressEvent(QMouseEvent *event)
                 if(numCircles == 1)
                 {
                     win = true;
-                    repaint();
+                    update();
                     return;
                 }
                 last = i;
@@ -605,7 +457,7 @@ void GameWidget::mousePressEvent(QMouseEvent *event)
                 {
                     lose = true;
                     qDebug() << "Lose Condition";
-                    repaint();
+                    update();
                     return;
                 }
                 blueList.clear();
@@ -616,11 +468,10 @@ void GameWidget::mousePressEvent(QMouseEvent *event)
                 {
                     if(!blueList.contains(i)) redList << i;
                 }
-                if(gameTimer->isActive()) gameTimer->stop();
+                gameTimerActive = false;
                 animationActive = true;
                 animationFrame = 0;
-                animationTimer->start(ANIMATIONDELAY);
-                repaint();
+                update();
                 break;
             }
             else qDebug() << "Invalid";
@@ -632,4 +483,42 @@ bool GameWidget::inCircle(QPoint center, int radius, QPoint cursorPos)
 {
     // simplification using square bounding box
     return cursorPos.x() < (center.x() + radius) && cursorPos.x() > (center.x() - radius) && cursorPos.y() < (center.y() + radius) && cursorPos.y() > (center.y() - radius);
+}
+
+void GameWidget::resetClicked()
+{
+    lose = false;
+    win = false;
+    numCircles = MAXCIRCLES;
+    delete circleArray;
+    circleArray = new int[numCircles];
+    for(int i = 0; i < numCircles; ++i)
+        circleArray[i] = circleCache[i];
+    startState = true;
+    timeRemaining = 0;
+    animationState = 0;
+    animationActive = false;
+    gameTimerActive = false;
+    blueList.clear();
+    redList.clear();
+    update();
+}
+
+void GameWidget::newClicked()
+{
+        lose = false;
+        win = false;
+        numCircles = MAXCIRCLES;
+        delete circleArray;
+        circleArray = generatePuzzle2();
+        for(int i = 0; i < numCircles; ++i)
+            circleCache[i] = circleArray[i];
+        startState = true;
+        timeRemaining = 0;
+        animationState = 0;
+        animationActive = false;
+        gameTimerActive = false;
+        blueList.clear();
+        redList.clear();
+        update();
 }

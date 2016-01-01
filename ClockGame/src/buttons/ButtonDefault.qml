@@ -19,9 +19,7 @@ Button {
         }
         return false
     }
-    objectName: "btn"
-    signal onClick()
-    onClicked: root.onClick()
+
     width: {
         if (StyleHelper.hasClass('block', class_name) || StyleHelper.hasClass('full', class_name))
             return parent.width;

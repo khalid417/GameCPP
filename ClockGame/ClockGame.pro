@@ -4,9 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui widgets multimedia
-
-greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+QT       += core gui widgets multimedia qml quick
 
 TARGET = ClockGame
 TEMPLATE = app
@@ -14,10 +12,13 @@ TEMPLATE = app
 
 SOURCES += main.cpp\
         gamewidget.cpp \
-    random.cpp
+    random.cpp \
+    optionscontroller.cpp
 
 HEADERS  += gamewidget.h \
-    random.h
+    random.h \
+    optionscontroller.h
 
-FORMS    += gamewidget.ui
+RESOURCES += \
+    qml.qrc
 
