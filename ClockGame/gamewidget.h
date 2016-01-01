@@ -3,23 +3,20 @@
 
 #include <QWidget>
 #include <QtWidgets>
-#include <QtMultimedia/QMediaPlayer>
+#include <QQuickPaintedItem>
 
-namespace Ui {
-class GameWidget;
-}
-
-class GameWidget : public QWidget
+class GameWidget : public QQuickPaintedItem
 {
     Q_OBJECT
 public:
-    explicit GameWidget(QWidget *parent = 0);
+    explicit GameWidget(QQuickItem *parent = 0);
     int * generatePuzzle();
     int * generatePuzzle2();
     ~GameWidget();
+    Q_INVOKABLE void resetClicked();
+    Q_INVOKABLE void newClicked();
 
 private:
-    Ui::GameWidget *ui;
     int numCircles;
     int * circleArray;
     bool inCircle(QPoint center, int radius, QPoint cursorPos);
@@ -37,16 +34,13 @@ private:
     int lastBlue[2];
     bool lose;
     int win;
-    bool paused;
-    bool gameStarted;
-    bool gameOver;
-    QHBoxLayout *topLayout;
-    QVBoxLayout *pauseLayout;
-    QVBoxLayout *auxLayout;
-    QMediaPlayer *player;
-    bool menustate;
+    bool gameTimerActive;
+    int * circleCache;
+    int animationState;
+    double ANIMATIONDELAY;
+    enum difficulties{Easy = 0, Regular, Hard};
 protected:
-    void paintEvent(QPaintEvent *event) Q_DECL_OVERRIDE;
+    void paint(QPainter* painter) Q_DECL_OVERRIDE;
     void mousePressEvent(QMouseEvent *event);
 };
 
