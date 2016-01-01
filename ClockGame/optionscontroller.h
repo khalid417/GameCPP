@@ -20,9 +20,11 @@ public:
     void setMuted(bool muted);
     void setDifficulty(int difficulty);
     void setAnimationSpeed(int animationSpeed);
+    Q_INVOKABLE int getCurrentGlobalSpeed();
+    Q_INVOKABLE int getCurrentGlobalDifficulty();
+    Q_INVOKABLE int getCurrentGlobalMuted();
 private:
     enum animationSpeeds{VerySlow = 0, Slow, Medium, Fast, VeryFast};
-    enum difficulties{Easy = 0, Regular, Hard};
     enum volumeToggle{On = 0, Off};
     int m_volume;
     bool m_muted;

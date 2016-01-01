@@ -9,7 +9,7 @@ class GameWidget : public QQuickPaintedItem
 {
     Q_OBJECT
 public:
-    explicit GameWidget(QQuickItem *parent = 0, int difficulty = 0, int animationSpeed = 0);
+    explicit GameWidget(QQuickItem *parent = 0);
     int * generatePuzzle();
     int * generatePuzzle2();
     ~GameWidget();
@@ -37,6 +37,8 @@ private:
     bool gameTimerActive;
     int * circleCache;
     int animationState;
+    double ANIMATIONDELAY;
+    enum difficulties{Easy = 0, Regular, Hard};
 protected:
     void paint(QPainter* painter) Q_DECL_OVERRIDE;
     void mousePressEvent(QMouseEvent *event);

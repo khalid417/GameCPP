@@ -7,17 +7,29 @@
 #define MAXCIRCLES 12
 #define TIMERESET 12
 #define ANIMATIONENDFRAME 60.0
-#define DEV 1
-#ifdef DEV
-static const QString RESOURCEPATH = "../../GameCPP/ClockGame/Resources/";
-#else
-static const QString RESOURCEPATH = "./";
-#endif
-static double ANIMATIONDELAY = 1000/ANIMATIONENDFRAME;
 
-GameWidget::GameWidget(QQuickItem *parent, int difficulty, int animationSpeed) :
+extern double globalDelay;
+extern int globalDifficulty;
+
+GameWidget::GameWidget(QQuickItem *parent) :
     QQuickPaintedItem(parent)
 {
+    int gameTimerDelay;
+    ANIMATIONDELAY = globalDelay/ANIMATIONENDFRAME;
+    switch(globalDifficulty)
+    {
+        case difficulties::Easy:
+            gameTimerDelay = 2000;
+            break;
+        case difficulties::Regular:
+            gameTimerDelay = 1000;
+            break;
+        case difficulties::Hard:
+            gameTimerDelay = 200;
+            break;
+        default:
+            gameTimerDelay = 1000;
+    }
     setOpaquePainting(false);
     setAcceptedMouseButtons(Qt::AllButtons);
     setAcceptHoverEvents(true);
@@ -36,7 +48,7 @@ GameWidget::GameWidget(QQuickItem *parent, int difficulty, int animationSpeed) :
         }
         update();
     });
-    gameTimer->start(1000);
+    gameTimer->start(gameTimerDelay);
     animationTimer->start(ANIMATIONDELAY);
     circleArray = generatePuzzle2();
     circleCache = new int [MAXCIRCLES];

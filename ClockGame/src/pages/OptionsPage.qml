@@ -11,10 +11,6 @@ Item {
     height: parent.height
     Controller{
         id:aController
-        volume: 50
-        difficulty: 1
-        muted: false
-        animationSpeed: 2
     }
     Item {
         width: parent.width - 20
@@ -44,7 +40,7 @@ Item {
                        text: 'Hard'
                    }
                ]
-               checkedIndex: 1
+               checkedIndex: aController.getCurrentGlobalDifficulty()
                width: parent.width
                onCheckedIndexChanged: {
                    console.log('Difficulty: ' + model[checkedIndex].text);
@@ -78,7 +74,7 @@ Item {
                    }
 
                ]
-               checkedIndex: 2
+               checkedIndex: aController.getCurrentGlobalSpeed()
                width: parent.width
                onCheckedIndexChanged: {
                    console.log('Speed: ' + model[checkedIndex].text);
@@ -102,7 +98,7 @@ Item {
                        text: 'Off'
                    }
                ]
-               checkedIndex: 0
+               checkedIndex: aController.getCurrentGlobalMuted()
                width: parent.width
                onCheckedIndexChanged: {
                    console.log('Sound ' + model[checkedIndex].text);
