@@ -22,3 +22,4 @@ HEADERS  += gamewidget.h \
 RESOURCES += \
     qml.qrc
 
+include(deployment.pri)

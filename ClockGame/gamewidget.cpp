@@ -179,18 +179,18 @@ void GameWidget::paint(QPainter *painter)
     }
     painter->setRenderHint(QPainter::Antialiasing);
     painter->translate(width() / 2, height() / 2);
-    if (lose || (timeRemaining <= 0 && gameTimerActive))
-    {
-        painter->setPen(textColor);
-        painter->setFont(QFont("Times New Roman", 60));
-        painter->drawText(-width() / 4, 0, "YOU LOSE!");
-        return;
-    }
     if (win)
     {
         painter->setPen(textColor);
         painter->setFont(QFont("Times New Roman", 60));
         painter->drawText(-width() / 4, 0, "YOU WIN!");
+        return;
+    }
+    if (lose || (timeRemaining <= 0 && gameTimerActive))
+    {
+        painter->setPen(textColor);
+        painter->setFont(QFont("Times New Roman", 60));
+        painter->drawText(-width() / 4, 0, "YOU LOSE!");
         return;
     }
     if(!animationActive || (animationState != 2 && animationState != 3))
@@ -449,6 +449,7 @@ void GameWidget::mousePressEvent(QMouseEvent *event)
                 if(numCircles == 1)
                 {
                     win = true;
+                    gameTimerActive = false;
                     update();
                     return;
                 }
