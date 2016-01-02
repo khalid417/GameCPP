@@ -23,7 +23,7 @@ Item {
             Image{
                 width: 24; height: 24
                 fillMode: Image.PreserveAspectFit
-                source: "qrc:///Resources/Icons/ic_email_black_24dp_1x.png"
+                source: "qrc:///Resources/Images/ic_email_black_24dp_1x.png"
                 anchors.horizontalCenter: parent.horizontalCenter
             }
             TextContent{

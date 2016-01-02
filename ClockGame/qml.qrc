@@ -38,13 +38,11 @@
         <file>random.cpp</file>
         <file>random.h</file>
         <file>src/pages/CreditsPage.qml</file>
-        <file>Resources/Icons/ic_email_black_24dp_1x.png</file>
-        <file>Resources/Icons/ic_volume_down_black_24dp_1x.png</file>
-        <file>Resources/Icons/ic_volume_up_black_24dp_1x.png</file>
         <file>Resources/Sounds/theme.mp3</file>
         <file>Resources/Images/HelpImage1.png</file>
         <file>Resources/Images/HelpImage2.png</file>
         <file>optionscontroller.cpp</file>
         <file>optionscontroller.h</file>
+        <file>Resources/Images/ic_email_black_24dp_1x.png</file>
     </qresource>
 </RCC>
