@@ -203,7 +203,7 @@ void GameWidget::paint(QPainter *painter)
         int circleNum = 0;
         for (QPoint circle : circleGraph)
         {
-            if(redList.contains(circleNum)) painter->setBrush(circleColorRed);
+            if(redList.contains(circleNum) || (animationActive && (animationState == 0 || animationState == 1))) painter->setBrush(circleColorRed);
             else painter->setBrush(circleColorBlue);
             if (animationActive == 1 && circleNum == last) painter->setBrush(circleColorGreen);
             painter->drawEllipse(circle, radius, radius);
