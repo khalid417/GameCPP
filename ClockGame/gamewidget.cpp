@@ -63,6 +63,7 @@ GameWidget::GameWidget(QQuickItem *parent) :
     startState = true;
     timeRemaining = 0;
     animationActive = false;
+    losingMove = false;
     update();
 }
 
@@ -305,7 +306,7 @@ void GameWidget::paint(QPainter *painter)
             if(animationFrame >= ANIMATIONENDFRAME)
             {
                 animationFrame = 0;
-                animationState = 3;
+                animationState = (losingMove ? 4 : 3);
             }
         }
         else if (animationState == 3) //move circles to new position
@@ -380,6 +381,7 @@ void GameWidget::paint(QPainter *painter)
             animationActive = false;
             timeRemaining = TIMERESET;
             gameTimerActive = true;
+            lose = losingMove;
         }
     }
     else
@@ -458,13 +460,7 @@ void GameWidget::mousePressEvent(QMouseEvent *event)
                     lastBlue[1] = blueList.at(1);
                 }
                 startState = false;
-                if ((last + lastValue) % (numCircles) == last)
-                {
-                    lose = true;
-                    qDebug() << "Lose Condition";
-                    update();
-                    return;
-                }
+                if ((last + lastValue) % (numCircles) == last) losingMove = true;
                 blueList.clear();
                 redList.clear();
                 blueList << ((last + lastValue) % numCircles);
@@ -479,7 +475,6 @@ void GameWidget::mousePressEvent(QMouseEvent *event)
                 update();
                 break;
             }
-            else qDebug() << "Invalid";
         }
     }
 }
@@ -493,6 +488,7 @@ bool GameWidget::inCircle(QPoint center, int radius, QPoint cursorPos)
 void GameWidget::resetClicked()
 {
     lose = false;
+    losingMove = false;
     win = false;
     numCircles = MAXCIRCLES;
     delete circleArray;
@@ -513,6 +509,7 @@ void GameWidget::newClicked()
 {
         lose = false;
         win = false;
+        losingMove = false;
         numCircles = MAXCIRCLES;
         delete circleArray;
         circleArray = generatePuzzle2();

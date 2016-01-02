@@ -40,6 +40,7 @@ private:
     double ANIMATIONDELAY;
     int MAXCIRCLES;
     double rad;
+    bool losingMove;
     enum difficulties{Easy = 0, Regular, Hard};
 protected:
     void paint(QPainter* painter) Q_DECL_OVERRIDE;
