@@ -214,29 +214,19 @@ void GameWidget::paint(QPainter *painter)
     }
     if(animationActive)
     {
+        QColor ColorAnimate(Qt::GlobalColor::green);
         if (animationState == 0) //move hands to last
         {
-            QColor ColorAnimate(Qt::GlobalColor::green);
             painter->scale(side / 200.0, side / 200.0);
-
             painter->setPen(Qt::NoPen);
             painter->setBrush(ColorAnimate);
-
             painter->save();
             painter->rotate((360.0/numCircles) * (lastBlue[0] + (last - lastBlue[0])*animationFrame/ANIMATIONENDFRAME) + 90);
             painter->drawConvexPolygon(minuteHand, 3);
             painter->restore();
-            if(blueList.size() > 1)
-            {
-                painter->rotate((360.0/numCircles) * (lastBlue[1] + (last - lastBlue[1])*animationFrame/ANIMATIONENDFRAME) + 90);
-                painter->drawConvexPolygon(minuteHand, 3);
-            }
-            else
-            {
-                painter->rotate((360.0/numCircles) * (lastBlue[1] + (last - lastBlue[1])*animationFrame/ANIMATIONENDFRAME) + 90);
-                painter->drawConvexPolygon(minuteHand, 3);
-            }
-            if(animationFrame >= ANIMATIONENDFRAME)
+            painter->rotate((360.0/numCircles) * (lastBlue[1] + (last - lastBlue[1])*animationFrame/ANIMATIONENDFRAME) + 90);
+            painter->drawConvexPolygon(minuteHand, 3);
+            if(animationFrame >= ANIMATIONENDFRAME || lastBlue[0] == lastBlue[1] || numCircles == MAXCIRCLES)
             {
                 animationFrame = 0;
                 animationState = 1;
@@ -244,7 +234,6 @@ void GameWidget::paint(QPainter *painter)
         }
         else if (animationState == 1) //move hands to next blue
         {
-            QColor ColorAnimate(Qt::GlobalColor::green);
             painter->scale(side / 200.0, side / 200.0);
             double degree = (360.0/numCircles)*(lastValue);
             painter->setPen(Qt::NoPen);
@@ -297,7 +286,6 @@ void GameWidget::paint(QPainter *painter)
                 }
                 painter->drawText(circleGraph.at(i), QString::number(circleArray[i]));
             }
-            QColor ColorAnimate(Qt::GlobalColor::green);
             painter->scale(side / 200.0, side / 200.0);
 
             painter->setPen(Qt::NoPen);
@@ -345,7 +333,6 @@ void GameWidget::paint(QPainter *painter)
                     continue;
                 painter->drawText(pos, QString::number(circleArray[i]));
             }
-            QColor ColorAnimate(Qt::GlobalColor::green);
             painter->scale(side / 200.0, side / 200.0);
 
             painter->setPen(Qt::NoPen);
