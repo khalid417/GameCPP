@@ -4,7 +4,6 @@
 #include <QList>
 #include <math.h>
 #define PI 3.14159265358979
-#define MAXCIRCLES 12
 #define TIMERESET 12
 #define ANIMATIONENDFRAME 60.0
 
@@ -20,12 +19,18 @@ GameWidget::GameWidget(QQuickItem *parent) :
     {
         case difficulties::Easy:
             gameTimerDelay = 2000;
+            MAXCIRCLES = 8;
+            rad = 5;
             break;
         case difficulties::Regular:
             gameTimerDelay = 1000;
+            MAXCIRCLES = 12;
+            rad = 4;
             break;
         case difficulties::Hard:
             gameTimerDelay = 200;
+            MAXCIRCLES = 18;
+            rad = 2.7;
             break;
         default:
             gameTimerDelay = 1000;
@@ -148,17 +153,17 @@ int * GameWidget::generatePuzzle()
 
 void GameWidget::paint(QPainter *painter)
 {
-    static const QPoint minuteHand[3] =
+    QPoint minuteHand[3] =
     {
-        QPoint(7, 8),
-        QPoint(-7, 8),
-        QPoint(0, -70)
+        QPoint(5, 8),
+        QPoint(-5, 8),
+        QPoint(0, -50*(4.0/rad))
     };
     static const QPoint secondHand[3] =
     {
-        QPoint(3, 8),
-        QPoint(-3, 8),
-        QPoint(0, -70)
+        QPoint(4, 8),
+        QPoint(-4, 8),
+        QPoint(0, -80)
     };
     if (startState)
     {
@@ -174,7 +179,7 @@ void GameWidget::paint(QPainter *painter)
     for (int i = 0; i < numCircles; ++i)
     {
         double degree = (2 * PI / numCircles) * i;
-        QPoint circle = QPoint(cos(degree) * side / 4, sin(degree) * side / 4);
+        QPoint circle = QPoint(cos(degree) * side / rad, sin(degree) * side / rad);
         circleGraph.append(circle);
     }
     painter->setRenderHint(QPainter::Antialiasing);
@@ -311,8 +316,8 @@ void GameWidget::paint(QPainter *painter)
                 if(redList.contains(circleNum)) painter->setBrush(circleColorRed);
                 else painter->setBrush(circleColorBlue);
                 double degree = (circleNum > last) ? (2 * PI / (numCircles - 1)) * (circleNum - 1) : (2 * PI / (numCircles - 1)) * (circleNum);
-                QPoint pos(circle.x() + ((cos(degree) * side / 4) - circle.x())*animationFrame/ANIMATIONENDFRAME,
-                           circle.y() + ((sin(degree) * side / 4) - circle.y())*animationFrame/ANIMATIONENDFRAME);
+                QPoint pos(circle.x() + ((cos(degree) * side / rad) - circle.x())*animationFrame/ANIMATIONENDFRAME,
+                           circle.y() + ((sin(degree) * side / rad) - circle.y())*animationFrame/ANIMATIONENDFRAME);
                 if (circleNum == last)
                 {
                     circleNum++;
@@ -327,8 +332,8 @@ void GameWidget::paint(QPainter *painter)
             for (int i = 0 ; i < numCircles ; i++)
             {
                 double degree = (i > last) ? (2 * PI / (numCircles - 1)) * (i - 1) : (2 * PI / (numCircles - 1)) * (i);
-                QPoint pos(circleGraph.at(i).x() + ((cos(degree) * side / 4) - circleGraph.at(i).x())*animationFrame/ANIMATIONENDFRAME,
-                           circleGraph.at(i).y() + ((sin(degree) * side / 4) - circleGraph.at(i).y())*animationFrame/ANIMATIONENDFRAME);
+                QPoint pos(circleGraph.at(i).x() + ((cos(degree) * side / rad) - circleGraph.at(i).x())*animationFrame/ANIMATIONENDFRAME,
+                           circleGraph.at(i).y() + ((sin(degree) * side / rad) - circleGraph.at(i).y())*animationFrame/ANIMATIONENDFRAME);
                 if(i == last)
                     continue;
                 painter->drawText(pos, QString::number(circleArray[i]));
@@ -424,7 +429,7 @@ void GameWidget::mousePressEvent(QMouseEvent *event)
     for (int i = 0; i < numCircles; ++i)
     {
         double degree = (2 * PI / numCircles) * i;
-        QPoint circle = QPoint(cos(degree) * side / 4, sin(degree) * side / 4);
+        QPoint circle = QPoint(cos(degree) * side / rad, sin(degree) * side / rad);
         circleGraph.append(circle);
     }
     for (int i = 0; i < numCircles; ++i)

@@ -38,6 +38,8 @@ private:
     int * circleCache;
     int animationState;
     double ANIMATIONDELAY;
+    int MAXCIRCLES;
+    double rad;
     enum difficulties{Easy = 0, Regular, Hard};
 protected:
     void paint(QPainter* painter) Q_DECL_OVERRIDE;
