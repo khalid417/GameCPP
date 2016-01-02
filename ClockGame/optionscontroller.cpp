@@ -4,6 +4,8 @@
 extern QMediaPlayer *player;
 extern double globalDelay;
 extern int globalDifficulty;
+extern int mode;
+
 int OptionsController::getCurrentGlobalDifficulty()
 {
     return globalDifficulty;
@@ -19,6 +21,10 @@ int OptionsController::getCurrentGlobalSpeed()
     else if(globalDelay > 500) return 2;
     else if(globalDelay > 200) return 3;
     else return 4;
+}
+int OptionsController::getCurrentGlobalMode()
+{
+    return ::mode;
 }
 void OptionsController::animationSpeedClicked(int index)
 {
@@ -67,7 +73,11 @@ void OptionsController::volumeToggleClicked(int index)
     else m_muted = true;
     player->setMuted(m_muted);
 }
-
+void OptionsController::modeClicked(int index)
+{
+    m_mode = index;
+    ::mode = m_mode;
+}
 int OptionsController::volume()
 {
     return m_volume;
@@ -88,6 +98,10 @@ int OptionsController::animationSpeed()
     return m_animationSpeed;
 }
 
+int OptionsController::mode()
+{
+    return m_mode;
+}
 void OptionsController::setVolume(int volume)
 {
     m_volume = volume;
@@ -106,4 +120,8 @@ void OptionsController::setDifficulty(int difficulty)
 void OptionsController::setAnimationSpeed(int animationSpeed)
 {
     m_animationSpeed = animationSpeed;
+}
+void OptionsController::setMode(int mode)
+{
+    m_mode = mode;
 }

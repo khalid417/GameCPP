@@ -18,8 +18,32 @@ Item {
         anchors.topMargin: 20
         anchors.horizontalCenter: parent.horizontalCenter
         Column {
-            spacing: 100
+            spacing: 80
             width: parent.width
+            TextContent{
+                class_name: "h3"
+                text: "Game Mode"
+                color: "#4a87ee"
+                anchors.horizontalCenter: parent.horizontalCenter
+            }
+            ButtonBar{
+               class_name: "positive"
+               checkable: true
+               model: [
+                   {
+                       text: 'Type 1'
+                   },
+                   {
+                       text: 'Type 2'
+                   }
+               ]
+               checkedIndex: aController.getCurrentGlobalMode()
+               width: parent.width
+               onCheckedIndexChanged: {
+                   console.log('Mode: ' + model[checkedIndex].text);
+                   aController.modeClicked(checkedIndex);
+               }
+            }
             TextContent{
                 class_name: "h3"
                 text: "Difficulty"

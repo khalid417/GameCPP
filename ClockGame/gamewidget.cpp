@@ -9,6 +9,7 @@
 
 extern double globalDelay;
 extern int globalDifficulty;
+extern int mode;
 
 GameWidget::GameWidget(QQuickItem *parent) :
     QQuickPaintedItem(parent)
@@ -34,12 +35,12 @@ GameWidget::GameWidget(QQuickItem *parent) :
             break;
         default:
             gameTimerDelay = 1000;
+            MAXCIRCLES = 12;
+            rad = 4;
     }
     setOpaquePainting(false);
     setAcceptedMouseButtons(Qt::AllButtons);
     setAcceptHoverEvents(true);
-    // integration with qquick causes paint to be called from a separate thread of execution
-    gameTimerActive = false;
     lose = false;
     win = false;
     animationState = 0;
@@ -55,15 +56,28 @@ GameWidget::GameWidget(QQuickItem *parent) :
     });
     gameTimer->start(gameTimerDelay);
     animationTimer->start(ANIMATIONDELAY);
-    circleArray = generatePuzzle2();
-    circleCache = new int [MAXCIRCLES];
-    for(int i = 0; i < MAXCIRCLES; ++i)
-        circleCache[i] = circleArray[i];
     side = 800;
     startState = true;
     timeRemaining = 0;
     animationActive = false;
     losingMove = false;
+    gameTimerActive = false;
+    if(mode == 1)
+    {
+        circleArray = generatePuzzle2();
+        circleCache = new int [MAXCIRCLES];
+        for(int i = 0; i < MAXCIRCLES; ++i)
+            circleCache[i] = circleArray[i];
+    }
+    else
+    {
+        timeRemaining = TIMERESET * 2;
+        circleArray = generatePuzzle();
+        for(int i = 0; i < MAXCIRCLES; ++i)
+            liveArray.append(i);
+        for(int i = 0; i < MAXCIRCLES; ++i)
+            neighbors.append(QPair<int, int>((i+circleArray[i])%MAXCIRCLES, ((i+MAXCIRCLES-circleArray[i])%MAXCIRCLES)));
+    }
     update();
 }
 
@@ -72,7 +86,7 @@ GameWidget::~GameWidget()
     delete gameTimer;
     delete animationTimer;
     delete circleArray;
-    delete circleCache;
+    if(mode == 1) delete circleCache;
 }
 int * GameWidget::generatePuzzle2()
 {
@@ -166,7 +180,7 @@ void GameWidget::paint(QPainter *painter)
         QPoint(-4, 8),
         QPoint(0, -80)
     };
-    if (startState)
+    if (mode == 1 && startState)
     {
         for(int i = 0; i < numCircles; ++i)
             blueList << i;
@@ -174,8 +188,8 @@ void GameWidget::paint(QPainter *painter)
     int radius = side / 16;
     QColor circleColorBlue(Qt::GlobalColor::blue);
     QColor circleColorRed(Qt::GlobalColor::red);
-    QColor circleColorGreen(Qt::GlobalColor::green);
     QColor textColor(Qt::GlobalColor::black);
+    QColor circleColorGreen(Qt::GlobalColor::green);
     QList<QPoint> circleGraph;
     for (int i = 0; i < numCircles; ++i)
     {
@@ -199,14 +213,42 @@ void GameWidget::paint(QPainter *painter)
         painter->drawText(-width() / 4, 0, "YOU LOSE!");
         return;
     }
-    if(!animationActive || (animationState != 2 && animationState != 3))
+    if(mode == 1)
     {
+        if(!animationActive || (animationState != 2 && animationState != 3))
+        {
+            int circleNum = 0;
+            for (QPoint circle : circleGraph)
+            {
+                if(redList.contains(circleNum) || (animationActive && (animationState == 0 || animationState == 1))) painter->setBrush(circleColorRed);
+                else painter->setBrush(circleColorBlue);
+                if (animationActive == true && circleNum == last) painter->setBrush(circleColorGreen);
+                painter->drawEllipse(circle, radius, radius);
+                circleNum++;
+            }
+
+            painter->setPen(textColor);
+            painter->setFont(QFont("Times New Roman", 30));
+            for (int i = 0 ; i < numCircles ; i++)
+            {
+                painter->drawText(circleGraph.at(i), QString::number(circleArray[i]));
+            }
+        }
+    }
+    else
+    {
+        QColor circleColorGray(Qt::GlobalColor::gray);
         int circleNum = 0;
         for (QPoint circle : circleGraph)
         {
-            if(redList.contains(circleNum) || (animationActive && (animationState == 0 || animationState == 1))) painter->setBrush(circleColorRed);
-            else painter->setBrush(circleColorBlue);
-            if (animationActive == 1 && circleNum == last) painter->setBrush(circleColorGreen);
+            painter->setBrush(circleColorGray);
+            if(startState) painter->setBrush(circleColorBlue);
+            if(!startState && liveArray.contains(circleNum))
+            {
+                painter->setBrush(circleColorRed);
+                if(circleNum == neighbors.at(last).first || circleNum == neighbors.at(last).second) painter->setBrush(circleColorBlue);
+                if(animationActive) painter->setBrush(circleColorRed);
+            }
             painter->drawEllipse(circle, radius, radius);
             circleNum++;
         }
@@ -226,16 +268,33 @@ void GameWidget::paint(QPainter *painter)
             painter->scale(side / 200.0, side / 200.0);
             painter->setPen(Qt::NoPen);
             painter->setBrush(ColorAnimate);
-            painter->save();
-            painter->rotate((360.0/numCircles) * (lastBlue[0] + (last - lastBlue[0])*animationFrame/ANIMATIONENDFRAME) + 90);
-            painter->drawConvexPolygon(minuteHand, 3);
-            painter->restore();
-            painter->rotate((360.0/numCircles) * (lastBlue[1] + (last - lastBlue[1])*animationFrame/ANIMATIONENDFRAME) + 90);
-            painter->drawConvexPolygon(minuteHand, 3);
-            if(animationFrame >= ANIMATIONENDFRAME || lastBlue[0] == lastBlue[1] || numCircles == MAXCIRCLES)
+            if(mode == 1 || liveArray.contains(lastBlue[0]))
             {
-                animationFrame = 0;
-                animationState = 1;
+                painter->save();
+                painter->rotate((360.0/numCircles) * (lastBlue[0] + (last - lastBlue[0])*animationFrame/ANIMATIONENDFRAME) + 90);
+                painter->drawConvexPolygon(minuteHand, 3);
+                painter->restore();
+            }
+            if(mode == 1 || liveArray.contains(lastBlue[1]))
+            {
+                painter->rotate((360.0/numCircles) * (lastBlue[1] + (last - lastBlue[1])*animationFrame/ANIMATIONENDFRAME) + 90);
+                painter->drawConvexPolygon(minuteHand, 3);
+            }
+            if(mode == 1)
+            {
+                if(animationFrame >= ANIMATIONENDFRAME || lastBlue[0] == lastBlue[1] || numCircles == MAXCIRCLES)
+                {
+                    animationFrame = 0;
+                    animationState = 1;
+                }
+            }
+            else
+            {
+                if(animationFrame >= ANIMATIONENDFRAME || liveArray.size() == numCircles || !liveArray.contains(lastBlue[1]) || !liveArray.contains(lastBlue[0]))
+                {
+                    animationFrame = 0;
+                    animationState = 1;
+                }
             }
         }
         else if (animationState == 1) //move hands to next blue
@@ -244,17 +303,24 @@ void GameWidget::paint(QPainter *painter)
             double degree = (360.0/numCircles)*(lastValue);
             painter->setPen(Qt::NoPen);
             painter->setBrush(ColorAnimate);
-            painter->save();
-            painter->rotate((360.0/numCircles) * (last) - (degree * animationFrame/ANIMATIONENDFRAME) + 90);
-            painter->drawConvexPolygon(minuteHand, 3);
-            painter->restore();
-            painter->rotate((360.0/numCircles) * (last) + (degree * animationFrame/ANIMATIONENDFRAME) + 90);
-            painter->drawConvexPolygon(minuteHand, 3);
-
+            if(mode == 1 || liveArray.contains(neighbors.at(last).second))
+            {
+                painter->save();
+                painter->rotate((360.0/numCircles) * (last) - (degree * animationFrame/ANIMATIONENDFRAME) + 90);
+                painter->drawConvexPolygon(minuteHand, 3);
+                painter->restore();
+            }
+            if(mode == 1 || liveArray.contains(neighbors.at(last).first))
+            {
+                painter->rotate((360.0/numCircles) * (last) + (degree * animationFrame/ANIMATIONENDFRAME) + 90);
+                painter->drawConvexPolygon(minuteHand, 3);
+            }
             if(animationFrame >= ANIMATIONENDFRAME)
             {
                 animationFrame = 0;
-                animationState = 2;
+                if (mode == 1)
+                    animationState = 2;
+                else animationState = 4;
             }
         }
         else if (animationState == 2) //move old last out
@@ -362,26 +428,34 @@ void GameWidget::paint(QPainter *painter)
         if(animationState == 4)
         {
             animationState = 0;
-            for(int i = 0; i < blueList.size(); ++i)
-                if(blueList.at(i) > last)
-                    blueList[i] = blueList[i] - 1;
-            numCircles--;
-            redList.clear();
-            for(int i = 0; i < numCircles; ++i)
+            if(mode == 1)
             {
-                if(!blueList.contains(i)) redList << i;
+                for(int i = 0; i < blueList.size(); ++i)
+                    if(blueList.at(i) > last)
+                        blueList[i] = blueList[i] - 1;
+                numCircles--;
+                redList.clear();
+                for(int i = 0; i < numCircles; ++i)
+                {
+                    if(!blueList.contains(i)) redList << i;
+                }
+                int * temp = new int[numCircles];
+                for(int i = 0; i < numCircles; ++i)
+                {
+                    temp[i] = circleArray[i < last ? i : i + 1];
+                }
+                delete circleArray;
+                circleArray = temp;
+                lose = losingMove;
+                timeRemaining = TIMERESET;
             }
-            int * temp = new int[numCircles];
-            for(int i = 0; i < numCircles; ++i)
+            else
             {
-                temp[i] = circleArray[i < last ? i : i + 1];
+                liveArray.removeOne(last);
+                timeRemaining = 2*TIMERESET;
             }
-            delete circleArray;
-            circleArray = temp;
             animationActive = false;
-            timeRemaining = TIMERESET;
             gameTimerActive = true;
-            lose = losingMove;
         }
     }
     else
@@ -398,7 +472,10 @@ void GameWidget::paint(QPainter *painter)
             painter->setBrush(secondColor);
 
             painter->save();
-            painter->rotate((360.0/TIMERESET) * (TIMERESET - timeRemaining));
+            if(mode == 1)
+                painter->rotate((360.0/TIMERESET) * (TIMERESET - timeRemaining));
+            else
+                painter->rotate((360.0/(TIMERESET*2)) * (2*TIMERESET - timeRemaining));
             painter->drawConvexPolygon(secondHand, 3);
             painter->restore();
 
@@ -412,20 +489,37 @@ void GameWidget::paint(QPainter *painter)
 
             painter->setPen(Qt::NoPen);
             painter->setBrush(minuteColor);
-
-            painter->save();
-            painter->rotate((360.0/numCircles) * blueList.at(0) + 90);
-            painter->drawConvexPolygon(minuteHand, 3);
-            painter->restore();
-            painter->rotate((360.0/numCircles) * blueList.at(1) + 90);
-            painter->drawConvexPolygon(minuteHand, 3);
+            if(mode == 1)
+            {
+                painter->save();
+                painter->rotate((360.0/numCircles) * blueList.at(0) + 90);
+                painter->drawConvexPolygon(minuteHand, 3);
+                painter->restore();
+                painter->rotate((360.0/numCircles) * blueList.at(1) + 90);
+                painter->drawConvexPolygon(minuteHand, 3);
+            }
+            else
+            {
+                if(liveArray.contains(neighbors.at(last).first))
+                {
+                    painter->save();
+                    painter->rotate((360.0/numCircles) * neighbors.at(last).first + 90);
+                    painter->drawConvexPolygon(minuteHand, 3);
+                    painter->restore();
+                }
+                if(liveArray.contains(neighbors.at(last).second))
+                {
+                    painter->rotate((360.0/numCircles) * neighbors.at(last).second + 90);
+                    painter->drawConvexPolygon(minuteHand, 3);
+                }
+            }
         }
     }
 }
 
 void GameWidget::mousePressEvent(QMouseEvent *event)
 {
-    if(animationActive) return;
+    if(animationActive || lose || win || (timeRemaining <= 0 && gameTimerActive)) return;
     QPoint cursorPos(event->x() - width() / 2, event->y() - height() / 2);
     QList<QPoint> circleGraph;
     for (int i = 0; i < numCircles; ++i)
@@ -438,42 +532,79 @@ void GameWidget::mousePressEvent(QMouseEvent *event)
     {
         if (inCircle(circleGraph.at(i), side/16, cursorPos))
         {
-            if (blueList.contains(i))
+            if (mode == 1)
             {
-                if(numCircles == 1)
+                if (blueList.contains(i))
                 {
-                    win = true;
+                    if(numCircles == 1)
+                    {
+                        win = true;
+                        gameTimerActive = false;
+                        update();
+                        return;
+                    }
+                    last = i;
+                    lastValue = circleArray[i];
+                    if(startState)
+                    {
+                        lastBlue[0] = last;
+                        lastBlue[1] = last;
+                    }
+                    else
+                    {
+                        lastBlue[0] = blueList.at(0);
+                        lastBlue[1] = blueList.at(1);
+                    }
+                    startState = false;
+                    if ((last + lastValue) % (numCircles) == last) losingMove = true;
+                    blueList.clear();
+                    redList.clear();
+                    blueList << ((last + lastValue) % numCircles);
+                    blueList << ((last - lastValue + (numCircles)*MAXCIRCLES) % numCircles);
+                    for(int i = 0; i < numCircles; ++i)
+                    {
+                        if(!blueList.contains(i)) redList << i;
+                    }
                     gameTimerActive = false;
+                    animationActive = true;
+                    animationFrame = 0;
                     update();
-                    return;
+                    break;
                 }
-                last = i;
-                lastValue = circleArray[i];
-                if(startState)
+            }
+            else
+            {
+                if(startState || (liveArray.contains(i) && (i == neighbors.at(last).first || i == neighbors.at(last).second)))
                 {
-                    lastBlue[0] = last;
-                    lastBlue[1] = last;
+                    if(liveArray.size() == 1)
+                    {
+                        win = true;
+                        gameTimerActive = false;
+                        update();
+                        return;
+                    }
+                    if(startState)
+                    {
+                        lastBlue[0] = i;
+                        lastBlue[1] = i;
+                    }
+                    else
+                    {
+                        lastBlue[0] = neighbors.at(last).first;
+                        lastBlue[1] = neighbors.at(last).second;
+                    }
+                    if(!liveArray.contains(neighbors.at(i).first) && !liveArray.contains(neighbors.at(i).second))
+                        lose = true;
+                    last = i;
+                    lastValue = circleArray[i];
+                    startState = false;
+                    if(!liveArray.contains(neighbors.at(i).first) && !liveArray.contains(neighbors.at(i).second)) losingMove = true;
+                    gameTimerActive = false;
+                    animationActive = true;
+                    animationFrame = 0;
+                    update();
+                    break;
                 }
-                else
-                {
-                    lastBlue[0] = blueList.at(0);
-                    lastBlue[1] = blueList.at(1);
-                }
-                startState = false;
-                if ((last + lastValue) % (numCircles) == last) losingMove = true;
-                blueList.clear();
-                redList.clear();
-                blueList << ((last + lastValue) % numCircles);
-                blueList << ((last - lastValue + (numCircles)*MAXCIRCLES) % numCircles);
-                for(int i = 0; i < numCircles; ++i)
-                {
-                    if(!blueList.contains(i)) redList << i;
-                }
-                gameTimerActive = false;
-                animationActive = true;
-                animationFrame = 0;
-                update();
-                break;
             }
         }
     }
@@ -490,37 +621,63 @@ void GameWidget::resetClicked()
     lose = false;
     losingMove = false;
     win = false;
-    numCircles = MAXCIRCLES;
-    delete circleArray;
-    circleArray = new int[numCircles];
-    for(int i = 0; i < numCircles; ++i)
-        circleArray[i] = circleCache[i];
+    if(mode == 1)
+    {
+        numCircles = MAXCIRCLES;
+        delete circleArray;
+        circleArray = new int[numCircles];
+        for(int i = 0; i < numCircles; ++i)
+            circleArray[i] = circleCache[i];
+        gameTimerActive = false;
+        blueList.clear();
+        redList.clear();
+        timeRemaining = 0;
+    }
+    else
+    {
+        liveArray.clear();
+        for(int i = 0; i < MAXCIRCLES; ++i)
+            liveArray.append(i);
+        gameTimerActive = true;
+        timeRemaining = 2 * TIMERESET;
+    }
     startState = true;
-    timeRemaining = 0;
     animationState = 0;
     animationActive = false;
-    gameTimerActive = false;
-    blueList.clear();
-    redList.clear();
     update();
 }
 
 void GameWidget::newClicked()
 {
-        lose = false;
-        win = false;
-        losingMove = false;
+    lose = false;
+    win = false;
+    losingMove = false;
+    if(mode == 1)
+    {
         numCircles = MAXCIRCLES;
         delete circleArray;
         circleArray = generatePuzzle2();
         for(int i = 0; i < numCircles; ++i)
             circleCache[i] = circleArray[i];
-        startState = true;
-        timeRemaining = 0;
-        animationState = 0;
-        animationActive = false;
-        gameTimerActive = false;
         blueList.clear();
         redList.clear();
-        update();
+        timeRemaining = 0;
+    }
+    else
+    {
+        delete circleArray;
+        circleArray = generatePuzzle();
+        liveArray.clear();
+        neighbors.clear();
+        for(int i = 0; i < MAXCIRCLES; ++i)
+            liveArray.append(i);
+        for(int i = 0; i < MAXCIRCLES; ++i)
+            neighbors.append(QPair<int, int>((i+circleArray[i])%MAXCIRCLES, ((i+MAXCIRCLES-circleArray[i])%MAXCIRCLES)));
+        timeRemaining = 2 * TIMERESET;
+    }
+    gameTimerActive = false;
+    startState = true;
+    animationState = 0;
+    animationActive = false;
+    update();
 }
