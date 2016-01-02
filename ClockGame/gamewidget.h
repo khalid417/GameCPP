@@ -42,6 +42,8 @@ private:
     double rad;
     bool losingMove;
     enum difficulties{Easy = 0, Regular, Hard};
+    QList<int> liveArray;
+    QList<QPair<int, int>> neighbors;
 protected:
     void paint(QPainter* painter) Q_DECL_OVERRIDE;
     void mousePressEvent(QMouseEvent *event);

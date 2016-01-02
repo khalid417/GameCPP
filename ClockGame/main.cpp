@@ -9,6 +9,7 @@ QMediaPlayer *player;
 double globalDelay;
 int globalDifficulty;
 QMediaPlaylist *playlist;
+int mode;
 
 int main(int argc, char *argv[])
 {
@@ -25,6 +26,7 @@ int main(int argc, char *argv[])
     player->play();
     globalDelay = 1000;
     globalDifficulty = 1;
+    mode = 1;
     QQmlApplicationEngine engine;
     engine.load(QUrl(QStringLiteral("qrc:/main.qml")));
 
