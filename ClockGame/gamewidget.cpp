@@ -246,14 +246,14 @@ void GameWidget::paint(QPainter *painter)
         {
             QColor ColorAnimate(Qt::GlobalColor::green);
             painter->scale(side / 200.0, side / 200.0);
-
+            double degree = (360.0/numCircles)*(lastValue);
             painter->setPen(Qt::NoPen);
             painter->setBrush(ColorAnimate);
             painter->save();
-            painter->rotate((360.0/numCircles) * (last + (blueList.at(0) - last)*animationFrame/ANIMATIONENDFRAME) + 90);
+            painter->rotate((360.0/numCircles) * (last) - (degree * animationFrame/ANIMATIONENDFRAME) + 90);
             painter->drawConvexPolygon(minuteHand, 3);
             painter->restore();
-            painter->rotate((360.0/numCircles) * (last + (blueList.at(1) - last)*animationFrame/ANIMATIONENDFRAME) + 90);
+            painter->rotate((360.0/numCircles) * (last) + (degree * animationFrame/ANIMATIONENDFRAME) + 90);
             painter->drawConvexPolygon(minuteHand, 3);
 
             if(animationFrame >= ANIMATIONENDFRAME)
