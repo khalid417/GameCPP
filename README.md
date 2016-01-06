@@ -1,4 +1,4 @@
 # GameCPP
-Source code for clock game. Requires QTv5.4+
-Uses dependencies in QML
+Source code for clock game.
+Uses dependencies in QT5.5
 Currently only compiles for Windows
