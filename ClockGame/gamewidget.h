@@ -4,21 +4,22 @@
 #include <QWidget>
 #include <QtWidgets>
 #include <QQuickPaintedItem>
-
+#include <memory>
+using namespace std;
 class GameWidget : public QQuickPaintedItem
 {
     Q_OBJECT
 public:
     explicit GameWidget(QQuickItem *parent = 0);
-    int * generatePuzzle();
-    int * generatePuzzle2();
+    unique_ptr<int[]> generatePuzzle();
+    unique_ptr<int[]> generatePuzzle2();
     ~GameWidget();
     Q_INVOKABLE void resetClicked();
     Q_INVOKABLE void newClicked();
 
 private:
     int numCircles;
-    int * circleArray;
+    unique_ptr<int[]> circleArray;
     bool inCircle(QPoint center, int radius, QPoint cursorPos);
     int side;
     int last;
@@ -27,15 +28,15 @@ private:
     QList<int> redList;
     QList<int> blueList;
     int timeRemaining;
-    QTimer *gameTimer;
+    unique_ptr<QTimer> gameTimer;
     bool animationActive;
     int animationFrame;
-    QTimer *animationTimer;
+    unique_ptr<QTimer> animationTimer;
     int lastBlue[2];
     bool lose;
     int win;
     bool gameTimerActive;
-    int * circleCache;
+    unique_ptr<int[]> circleCache;
     int animationState;
     double ANIMATIONDELAY;
     int MAXCIRCLES;

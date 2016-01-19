@@ -45,10 +45,10 @@ GameWidget::GameWidget(QQuickItem *parent) :
     win = false;
     animationState = 0;
     numCircles = MAXCIRCLES;
-    gameTimer = new QTimer(this);
-    animationTimer = new QTimer(this);
-    connect(gameTimer, &QTimer::timeout, [this](){if(gameTimerActive) timeRemaining--;});
-    connect(animationTimer, &QTimer::timeout, [this](){
+    gameTimer(new QTimer(this));
+    animationTimer(new QTimer(this));
+    connect(gameTimer.get(), &QTimer::timeout, [this](){if(gameTimerActive) timeRemaining--;});
+    connect(animationTimer.get(), &QTimer::timeout, [this](){
         if(animationActive) {
             animationFrame++;
         }
@@ -64,15 +64,15 @@ GameWidget::GameWidget(QQuickItem *parent) :
     gameTimerActive = false;
     if(mode == 1)
     {
-        circleArray = generatePuzzle2();
-        circleCache = new int [MAXCIRCLES];
+        circleArray = move(generatePuzzle2());
+        circleCache.reset(new int[MAXCIRCLES]);
         for(int i = 0; i < MAXCIRCLES; ++i)
             circleCache[i] = circleArray[i];
     }
     else
     {
         timeRemaining = TIMERESET * 2;
-        circleArray = generatePuzzle();
+        circleArray = move(generatePuzzle());
         for(int i = 0; i < MAXCIRCLES; ++i)
             liveArray.append(i);
         for(int i = 0; i < MAXCIRCLES; ++i)
@@ -83,21 +83,18 @@ GameWidget::GameWidget(QQuickItem *parent) :
 
 GameWidget::~GameWidget()
 {
-    delete gameTimer;
-    delete animationTimer;
-    delete circleArray;
-    if(mode == 1) delete circleCache;
 }
-int * GameWidget::generatePuzzle2()
+
+unique_ptr<int[]> GameWidget::generatePuzzle2()
 {
-    int * puzzleArray = new int[numCircles];
+    unique_ptr<int[]> puzzleArray(new int[numCircles]);
     Random rng(QTime::currentTime().msecsSinceStartOfDay());
     QList<int> puzzleList;
     int currentNodeValue = rng.nextInt(numCircles / 2) + 1;
     puzzleList.push_back(currentNodeValue);
     int prevPos = 0;
     for (int i = 2; i <= numCircles; i++) {
-        int * jArray = new int[i - 1];
+        unique_ptr<int[]>jArray(new int[i - 1]);
         int jIndex = 0;
         for (int j = 1; j <= i / 2; j++) {
             jArray[jIndex++] = j;
@@ -120,9 +117,9 @@ int * GameWidget::generatePuzzle2()
     return puzzleArray;
 }
 
-int * GameWidget::generatePuzzle()
+unique_ptr<int[]> GameWidget::generatePuzzle()
 {
-    int * puzzleArray = new int[numCircles];
+    unique_ptr<int[]> puzzleArray(new int[numCircles]);
             for (int i = 0; i < numCircles; i++) {
                 puzzleArray[i] = 0;
             }
@@ -439,13 +436,13 @@ void GameWidget::paint(QPainter *painter)
                 {
                     if(!blueList.contains(i)) redList << i;
                 }
-                int * temp = new int[numCircles];
+                unique_ptr<int[]> temp(new int[numCircles]);
                 for(int i = 0; i < numCircles; ++i)
                 {
                     temp[i] = circleArray[i < last ? i : i + 1];
                 }
-                delete circleArray;
-                circleArray = temp;
+                circleArray.reset();
+                circleArray = move(temp);
                 lose = losingMove;
                 timeRemaining = TIMERESET;
             }
@@ -624,8 +621,7 @@ void GameWidget::resetClicked()
     if(mode == 1)
     {
         numCircles = MAXCIRCLES;
-        delete circleArray;
-        circleArray = new int[numCircles];
+        circleArray.reset(new int[numCircles]);
         for(int i = 0; i < numCircles; ++i)
             circleArray[i] = circleCache[i];
         gameTimerActive = false;
@@ -655,8 +651,8 @@ void GameWidget::newClicked()
     if(mode == 1)
     {
         numCircles = MAXCIRCLES;
-        delete circleArray;
-        circleArray = generatePuzzle2();
+        circleArray.reset();
+        circleArray = move(generatePuzzle2());
         for(int i = 0; i < numCircles; ++i)
             circleCache[i] = circleArray[i];
         blueList.clear();
@@ -665,8 +661,8 @@ void GameWidget::newClicked()
     }
     else
     {
-        delete circleArray;
-        circleArray = generatePuzzle();
+        circleArray.reset();
+        circleArray = move(generatePuzzle());
         liveArray.clear();
         neighbors.clear();
         for(int i = 0; i < MAXCIRCLES; ++i)
