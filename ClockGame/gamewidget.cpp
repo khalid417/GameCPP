@@ -45,8 +45,8 @@ GameWidget::GameWidget(QQuickItem *parent) :
     win = false;
     animationState = 0;
     numCircles = MAXCIRCLES;
-    gameTimer(new QTimer(this));
-    animationTimer(new QTimer(this));
+    gameTimer.reset(new QTimer(this));
+    animationTimer.reset(new QTimer(this));
     connect(gameTimer.get(), &QTimer::timeout, [this](){if(gameTimerActive) timeRemaining--;});
     connect(animationTimer.get(), &QTimer::timeout, [this](){
         if(animationActive) {
