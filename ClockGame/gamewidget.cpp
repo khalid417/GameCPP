@@ -20,22 +20,22 @@ GameWidget::GameWidget(QQuickItem *parent) :
     {
         case difficulties::Easy:
             gameTimerDelay = 2000;
-            MAXCIRCLES = 8;
+            maxCircles = 8;
             rad = 5;
             break;
         case difficulties::Regular:
             gameTimerDelay = 1000;
-            MAXCIRCLES = 12;
+            maxCircles = 12;
             rad = 4;
             break;
         case difficulties::Hard:
             gameTimerDelay = 200;
-            MAXCIRCLES = 18;
+            maxCircles = 18;
             rad = 2.7;
             break;
         default:
             gameTimerDelay = 1000;
-            MAXCIRCLES = 12;
+            maxCircles = 12;
             rad = 4;
     }
     setOpaquePainting(false);
@@ -44,7 +44,7 @@ GameWidget::GameWidget(QQuickItem *parent) :
     lose = false;
     win = false;
     animationState = 0;
-    numCircles = MAXCIRCLES;
+    numCircles = maxCircles;
     gameTimer.reset(new QTimer(this));
     animationTimer.reset(new QTimer(this));
     connect(gameTimer.get(), &QTimer::timeout, [this](){if(gameTimerActive) timeRemaining--;});
@@ -65,18 +65,18 @@ GameWidget::GameWidget(QQuickItem *parent) :
     if(mode == 1)
     {
         circleArray = move(generatePuzzle2());
-        circleCache.reset(new int[MAXCIRCLES]);
-        for(int i = 0; i < MAXCIRCLES; ++i)
+        circleCache.reset(new int[maxCircles]);
+        for(int i = 0; i < maxCircles; ++i)
             circleCache[i] = circleArray[i];
     }
     else
     {
         timeRemaining = TIMERESET * 2;
         circleArray = move(generatePuzzle());
-        for(int i = 0; i < MAXCIRCLES; ++i)
+        for(int i = 0; i < maxCircles; ++i)
             liveArray.append(i);
-        for(int i = 0; i < MAXCIRCLES; ++i)
-            neighbors.append(QPair<int, int>((i+circleArray[i])%MAXCIRCLES, ((i+MAXCIRCLES-circleArray[i])%MAXCIRCLES)));
+        for(int i = 0; i < maxCircles; ++i)
+            neighbors.append(QPair<int, int>((i+circleArray[i])%maxCircles, ((i+maxCircles-circleArray[i])%maxCircles)));
     }
     update();
 }
@@ -279,7 +279,7 @@ void GameWidget::paint(QPainter *painter)
             }
             if(mode == 1)
             {
-                if(animationFrame >= ANIMATIONENDFRAME || lastBlue[0] == lastBlue[1] || numCircles == MAXCIRCLES)
+                if(animationFrame >= ANIMATIONENDFRAME || lastBlue[0] == lastBlue[1] || numCircles == maxCircles)
                 {
                     animationFrame = 0;
                     animationState = 1;
@@ -557,7 +557,7 @@ void GameWidget::mousePressEvent(QMouseEvent *event)
                     blueList.clear();
                     redList.clear();
                     blueList << ((last + lastValue) % numCircles);
-                    blueList << ((last - lastValue + (numCircles)*MAXCIRCLES) % numCircles);
+                    blueList << ((last - lastValue + (numCircles)*maxCircles) % numCircles);
                     for(int i = 0; i < numCircles; ++i)
                     {
                         if(!blueList.contains(i)) redList << i;
@@ -620,7 +620,7 @@ void GameWidget::resetClicked()
     win = false;
     if(mode == 1)
     {
-        numCircles = MAXCIRCLES;
+        numCircles = maxCircles;
         circleArray.reset(new int[numCircles]);
         for(int i = 0; i < numCircles; ++i)
             circleArray[i] = circleCache[i];
@@ -632,7 +632,7 @@ void GameWidget::resetClicked()
     else
     {
         liveArray.clear();
-        for(int i = 0; i < MAXCIRCLES; ++i)
+        for(int i = 0; i < maxCircles; ++i)
             liveArray.append(i);
         gameTimerActive = true;
         timeRemaining = 2 * TIMERESET;
@@ -650,7 +650,7 @@ void GameWidget::newClicked()
     losingMove = false;
     if(mode == 1)
     {
-        numCircles = MAXCIRCLES;
+        numCircles = maxCircles;
         circleArray.reset();
         circleArray = move(generatePuzzle2());
         for(int i = 0; i < numCircles; ++i)
@@ -665,10 +665,10 @@ void GameWidget::newClicked()
         circleArray = move(generatePuzzle());
         liveArray.clear();
         neighbors.clear();
-        for(int i = 0; i < MAXCIRCLES; ++i)
+        for(int i = 0; i < maxCircles; ++i)
             liveArray.append(i);
-        for(int i = 0; i < MAXCIRCLES; ++i)
-            neighbors.append(QPair<int, int>((i+circleArray[i])%MAXCIRCLES, ((i+MAXCIRCLES-circleArray[i])%MAXCIRCLES)));
+        for(int i = 0; i < maxCircles; ++i)
+            neighbors.append(QPair<int, int>((i+circleArray[i])%maxCircles, ((i+maxCircles-circleArray[i])%maxCircles)));
         timeRemaining = 2 * TIMERESET;
     }
     gameTimerActive = false;
