@@ -81,9 +81,6 @@ GameWidget::GameWidget(QQuickItem *parent) :
     update();
 }
 
-GameWidget::~GameWidget()
-{
-}
 
 unique_ptr<int[]> GameWidget::generatePuzzle2()
 {

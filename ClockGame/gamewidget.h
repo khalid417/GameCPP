@@ -12,7 +12,7 @@ class GameWidget : public QQuickPaintedItem
 public:
     // Contructor
     explicit GameWidget(QQuickItem *parent = 0);
-    ~GameWidget();
+    ~GameWidget() = default;
 
     // QML invokable functions
     Q_INVOKABLE void resetClicked();
