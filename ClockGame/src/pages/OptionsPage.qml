@@ -18,7 +18,7 @@ Item {
         anchors.topMargin: 20
         anchors.horizontalCenter: parent.horizontalCenter
         Column {
-            spacing: 65
+            spacing: 40
             width: parent.width
             TextContent{
                 class_name: "h3"
